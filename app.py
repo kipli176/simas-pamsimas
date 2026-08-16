@@ -49,11 +49,11 @@ MIN_RIWAYAT_UTK_ANOMALI = 2  # minimal berapa bulan riwayat sebelum deteksi anom
 ANOMALI_ABSOLUT_M3 = 100   # pemakaian di atas ini SELALU dicurigai anomali, walau belum ada riwayat pembanding
 FOTO_WAJIB = True          # foto bukti meteran wajib diunggah setiap pencatatan,
 # termasuk arsip offline (foto ikut disimpan di IndexedDB perangkat petugas, lalu dikirim bersama data)
-PIN_PETUGAS = "123456"     # PIN masuk petugas (sama untuk semua petugas)
+PIN_PETUGAS = os.environ.get("PIN_PETUGAS", "123456")  # PIN masuk petugas (sama untuk semua petugas)
 
 # HTTP Basic Auth untuk halaman admin
-ADMIN_USER = "admin"
-ADMIN_PASS = "12345678"
+ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
+ADMIN_PASS = os.environ.get("ADMIN_PASS", "12345678")
 
 # Cloudflare Turnstile untuk halaman login petugas.
 # Di bawah ini masih dummy key resmi Cloudflare (selalu lolos) untuk tahap uji coba.
@@ -65,7 +65,7 @@ TURNSTILE_SECRET_KEY = "1x0000000000000000000000000000000AA"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 app = Flask(__name__)
-app.secret_key = "pamsimas-secret-key-ubah-ini"
+app.secret_key = os.environ.get("SECRET_KEY", "pamsimas-secret-key-ubah-ini")
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # maks 5MB per upload foto
 
 

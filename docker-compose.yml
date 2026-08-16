@@ -7,6 +7,11 @@ services:
       - DB_PATH=/data/pamsimas.db
       - UPLOAD_DIR=/data/uploads
       - FLASK_DEBUG=0
+      # ganti nilai berikut sebelum dipakai sungguhan:
+      - ADMIN_USER=${ADMIN_USER:-admin}
+      - ADMIN_PASS=${ADMIN_PASS:-12345678}
+      - PIN_PETUGAS=${PIN_PETUGAS:-123456}
+      - SECRET_KEY=${SECRET_KEY:-pamsimas-secret-key-ubah-ini}
     volumes:
       - simas_data:/data
     networks:
