@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cetak Laporan — SIMAS Pamsimas</title>
+<style>
+*{box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif; color:#111; margin:0; padding:18px; font-size:13px;}
+.head{display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #111; padding-bottom:10px; margin-bottom:12px;}
+.head h1{font-size:17px; margin:0;}
+.head .sub{font-size:12px; color:#444; margin-top:3px;}
+.head .meta{text-align:right; font-size:11px; color:#333; line-height:1.6;}
+.summary{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
+.summary .box{border:1px solid #999; border-radius:6px; padding:8px 14px; font-size:12px;}
+.summary .box .lbl{color:#555; font-size:10px; text-transform:uppercase; letter-spacing:.4px;}
+.summary .box .val{font-weight:700; font-size:14px; margin-top:2px;}
+table{width:100%; border-collapse:collapse; font-size:11.5px;}
+thead th{background:#eee; border:1px solid #999; padding:5px 7px; text-align:left; text-transform:uppercase; font-size:10px;}
+tbody td{border:1px solid #bbb; padding:4px 7px; vertical-align:top;}
+tbody tr{page-break-inside:avoid;}
+.num{text-align:right;}
+.footer{margin-top:14px; border-top:1px solid #999; padding-top:8px; font-size:11px; color:#555; display:flex; justify-content:space-between;}
+.no-print{position:fixed; top:10px; right:10px;}
+.no-print button{background:#0e7fae; color:#fff; border:none; border-radius:8px; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer;}
+@media print{
+  .no-print{display:none;}
+  body{padding:0;}
+}
+</style>
+</head>
+<body>
+
+<div class="no-print"><button onclick="window.print()">Cetak</button></div>
+
+<div class="head">
+  <div>
+    <h1>LAPORAN TAGIHAN — SIMAS PAMSIMAS</h1>
+    <div class="sub">Periode {{ periode_label(lf.l_awal) }} s.d. {{ periode_label(lf.l_akhir) }}</div>
+  </div>
+  <div class="meta">
+    <div>Dicetak: {{ waktu_cetak }}</div>
+    <div>Filter:
+      {{ ('RW ' + lf.l_rw) if lf.l_rw else 'Semua RW' }}{{ (' · RT ' + lf.l_rt) if lf.l_rt }}
+      {{ ('· ' + lf.l_golongan) if lf.l_golongan }}
+      {{ ('· ' + ('Abodemen' if lf.l_jenis=='abodemen' else 'Normal')) if lf.l_jenis }}
+      {{ ('· ' + ('Lunas' if lf.l_status=='lunas' else 'Belum Bayar')) if lf.l_status }}
+    </div>
+  </div>
+</div>
+
+<div class="summary">
+  <div class="box"><div class="lbl">Jumlah Tagihan</div><div class="val">{{ agg.n }}</div></div>
+  <div class="box"><div class="lbl">Total Nominal</div><div class="val">Rp {{ "{:,.0f}".format(agg.total).replace(",", ".") }}</div></div>
+  <div class="box"><div class="lbl">Sudah Lunas</div><div class="val">Rp {{ "{:,.0f}".format(agg.lunas).replace(",", ".") }}</div></div>
+  <div class="box"><div class="lbl">Belum Bayar</div><div class="val">Rp {{ "{:,.0f}".format(agg.belum).replace(",", ".") }}</div></div>
+  <div class="box"><div class="lbl">Total Pemakaian</div><div class="val">{{ agg.total_m3 }} m³</div></div>
+</div>
+
+<table>
+  <thead><tr>
+    <th>Periode</th><th>No. Meteran</th><th>Nama</th><th>RT/RW</th><th>Golongan</th>
+    <th>Jenis</th><th class="num">m³</th><th class="num">Total</th><th>Status</th>
+  </tr></thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ periode_label(r.periode) }}</td>
+      <td>{{ r.nomor_meteran }}</td>
+      <td>{{ r.nama }}</td>
+      <td>{{ r.rt }}/{{ r.rw }}</td>
+      <td>{{ r.golongan_tarif }}</td>
+      <td>{{ 'Abodemen' if r.jenis=='abodemen' else 'Normal' }}</td>
+      <td class="num">{{ r.pemakaian_m3 }}</td>
+      <td class="num">Rp {{ "{:,.0f}".format(r.total_tagihan).replace(",", ".") }}</td>
+      <td>{{ 'Lunas' if r.status_bayar=='lunas' else 'Belum Bayar' }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="9" style="text-align:center; padding:20px;">Tidak ada data pada rentang/filter ini.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="footer">
+  <span>SIMAS — Sistem Informasi Pamsimas</span>
+  <span>dibuat oleh kipli.net</span>
+</div>
+
+<script>window.addEventListener('load', () => setTimeout(() => window.print(), 300));</script>
+</body>
+</html>

@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIMAS — Sistem Informasi Pamsimas</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand-900:#063a4f; --brand-700:#0b6285; --brand-600:#0e7fae; --brand-500:#1497cf;
+  --brand-100:#e7f4fa; --ink:#1e2b33; --muted:#6b7c86; --line:#e6edf1;
+  --radius:14px; --shadow-sm:0 1px 3px rgba(16,42,54,.06); --shadow:0 6px 20px rgba(16,42,54,.08);
+}
+*{box-sizing:border-box;}
+body{
+  font-family:'Inter',system-ui,sans-serif; color:var(--ink); background:#f2f6f8;
+  font-size:.925rem;
+}
+/* ---------- Topbar ---------- */
+.topbar{
+  background:linear-gradient(120deg,var(--brand-900),var(--brand-700) 60%,var(--brand-600));
+  color:#fff; padding:16px 28px; display:flex; align-items:center; justify-content:space-between;
+  box-shadow:var(--shadow);
+}
+.topbar .brand{display:flex; align-items:center; gap:12px;}
+.topbar .brand .logo{
+  width:42px; height:42px; border-radius:11px; background:rgba(255,255,255,.15);
+  display:flex; align-items:center; justify-content:center; font-size:1.3rem;
+}
+.topbar .brand h1{font-size:1.05rem; font-weight:800; margin:0; letter-spacing:.2px;}
+.topbar .brand small{display:block; color:rgba(255,255,255,.75); font-weight:400; font-size:.75rem;}
+.topbar .periode-chip{
+  background:rgba(255,255,255,.14); padding:8px 16px; border-radius:999px; font-weight:600; font-size:.85rem;
+}
+
+/* ---------- Layout ---------- */
+.layout{display:flex; min-height:calc(100vh - 70px);}
+.sidebar{
+  width:236px; background:#fff; border-right:1px solid var(--line); padding:18px 12px; flex-shrink:0;
+}
+.sidebar .nav-link{
+  display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:10px; color:var(--muted);
+  font-weight:600; font-size:.87rem; margin-bottom:4px; transition:.15s;
+}
+.sidebar .nav-link i{font-size:1.05rem; width:20px; text-align:center;}
+.sidebar .nav-link:hover{background:var(--brand-100); color:var(--brand-700);}
+.sidebar .nav-link.active{background:var(--brand-600); color:#fff; box-shadow:var(--shadow-sm);}
+.sidebar .nav-section-title{
+  font-size:.68rem; text-transform:uppercase; letter-spacing:.6px; color:#9fb0b8; font-weight:700;
+  margin:16px 14px 6px;
+}
+.main{flex:1; padding:22px 28px 60px; min-width:0;}
+
+/* ---------- Cards ---------- */
+.card-x{background:#fff; border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow-sm);}
+.stat{
+  background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px;
+  display:flex; align-items:center; gap:14px; height:100%;
+}
+.stat .ic{
+  width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.15rem; flex-shrink:0;
+}
+.stat .label{font-size:.72rem; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.3px;}
+.stat .value{font-size:1.25rem; font-weight:800; color:var(--ink); line-height:1.2;}
+.stat .sub{font-size:.72rem; color:var(--muted);}
+
+/* ---------- Filter bar ---------- */
+.filterbar{
+  background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; margin-bottom:16px;
+}
+.filterbar label{font-size:.72rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.3px; margin-bottom:4px;}
+.filterbar .form-select, .filterbar .form-control{font-size:.85rem; border-radius:9px;}
+
+/* ---------- Table ---------- */
+.table-wrap{background:#fff; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;}
+table.tbl{margin-bottom:0; font-size:.85rem;}
+table.tbl thead th{
+  background:#f7fafb; color:var(--muted); font-weight:700; text-transform:uppercase; font-size:.68rem;
+  letter-spacing:.4px; border-bottom:1px solid var(--line); white-space:nowrap; padding:11px 14px;
+}
+table.tbl tbody td{padding:10px 14px; vertical-align:middle; border-bottom:1px solid #f0f3f5;}
+table.tbl tbody tr:last-child td{border-bottom:none;}
+table.tbl tbody tr:hover{background:#fafcfd;}
+.table-toolbar{display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid var(--line); flex-wrap:wrap; gap:8px;}
+.table-toolbar .count{font-size:.78rem; color:var(--muted); font-weight:600;}
+
+/* ---------- Badges ---------- */
+.badge-x{padding:5px 10px; border-radius:7px; font-size:.72rem; font-weight:700;}
+.b-nonaktif{background:#eef1f3;color:#5b6b75;}
+.sort-link{color:var(--ink); text-decoration:none; display:inline-flex; align-items:center; gap:4px;}
+.sort-link:hover{color:var(--brand-600);}
+.table-highlight{background:var(--brand-100) !important;}
+.row-lunas{opacity:.6;}
+@media print{
+  .topbar, .filterbar, .btn, .pager, .app-footer{display:none !important;}
+  body{background:#fff;}
+  .card-x, .table-wrap, .stat{border:1px solid #ddd; box-shadow:none;}
+}
+.b-abodemen{background:#fde8e8; color:#c0392b;}
+.b-normal{background:#e4f7ea; color:#1e8449;}
+.b-lunas{background:#e3f0ff; color:#1d5ea8;}
+.b-belum{background:#fff6dc; color:#946c00;}
+.b-anomali{background:#ffe9cf; color:#a2570b;}
+
+/* ---------- Buttons ---------- */
+.btn-brand{background:var(--brand-600); border-color:var(--brand-600); color:#fff; font-weight:600;}
+.btn-brand:hover{background:var(--brand-700); border-color:var(--brand-700); color:#fff;}
+.btn-outline-brand{border-color:var(--brand-600); color:var(--brand-700); font-weight:600;}
+.btn-outline-brand:hover{background:var(--brand-600); color:#fff;}
+
+/* ---------- Pagination ---------- */
+.pager{display:flex; align-items:center; gap:6px; padding:12px 16px;}
+.pager a, .pager span{
+  padding:6px 12px; border-radius:8px; font-size:.8rem; font-weight:600; text-decoration:none; color:var(--brand-700);
+  border:1px solid var(--line);
+}
+.pager a:hover{background:var(--brand-100);}
+.pager .disabled{color:#c3ccd1; pointer-events:none;}
+.pager .current{background:var(--brand-600); color:#fff; border-color:var(--brand-600);}
+.app-footer{text-align:center; padding:18px 20px 26px; color:var(--muted); font-size:.8rem; border-top:1px solid var(--line); margin-top:26px;}
+
+/* ---------- Wizard pencatatan ---------- */
+.step-box{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:20px;}
+.step-num{
+  width:26px; height:26px; border-radius:50%; background:var(--brand-600); color:#fff; font-size:.75rem;
+  font-weight:700; display:inline-flex; align-items:center; justify-content:center; margin-right:8px;
+}
+.wizard-row .form-label{min-height:26px; display:flex; align-items:center;}
+.info-pelanggan{background:var(--brand-100); border:1px solid #cfe9f5; border-radius:10px; padding:14px 16px; font-size:.85rem;}
+.dropzone{
+  border:2px dashed #cfd8dc; border-radius:12px; padding:20px; text-align:center; cursor:pointer; transition:.15s;
+  background:#fafcfd;
+}
+.dropzone:hover{border-color:var(--brand-500); background:var(--brand-100);}
+.dropzone img{max-height:130px; border-radius:8px; margin-top:8px;}
+
+.section-title{font-size:1.05rem; font-weight:800; margin-bottom:2px;}
+.section-desc{color:var(--muted); font-size:.82rem; margin-bottom:16px;}
+.recap-pill{
+  display:flex; justify-content:space-between; padding:9px 12px; border-radius:9px; background:#f7fafb; font-size:.83rem; margin-bottom:6px;
+}
+@media (max-width:900px){
+  .sidebar{display:none;}
+  .main{padding:16px;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="logo"><i class="bi bi-droplet-half"></i></div>
+    <div>
+      <h1>SIMAS Pamsimas</h1>
+      <small>Sistem Informasi Manajemen Air Sederhana</small>
+    </div>
+  </div>
+  <div class="periode-chip"><i class="bi bi-calendar3"></i> Periode berjalan: {{ periode_now_label }}</div>
+</div>
+
+<div class="layout">
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar">
+    <div class="nav-section-title">Menu Utama</div>
+    <a class="nav-link {{ 'active' if tab=='tagihan' }}" href="{{ page_url(tab='tagihan') }}">
+      <i class="bi bi-receipt"></i> Tagihan Bulan Ini
+    </a>
+    <a class="nav-link {{ 'active' if tab=='pelanggan' }}" href="{{ page_url(tab='pelanggan') }}">
+      <i class="bi bi-people"></i> Data Pelanggan
+    </a>
+    <a class="nav-link {{ 'active' if tab=='catat' }}" href="{{ page_url(tab='catat') }}">
+      <i class="bi bi-pencil-square"></i> Input Pencatatan
+    </a>
+    <a class="nav-link {{ 'active' if tab=='laporan' }}" href="{{ page_url(tab='laporan') }}">
+      <i class="bi bi-bar-chart-line"></i> Laporan
+    </a>
+    <a class="nav-link {{ 'active' if tab=='tarif' }}" href="{{ page_url(tab='tarif') }}">
+      <i class="bi bi-graph-up-arrow"></i> Tarif Progresif
+    </a>
+    <div class="nav-section-title">Info</div>
+    <div class="px-3 small text-muted mb-3">
+      Abodemen berjalan: <strong>{{ abodemen|rupiah }}</strong><br>
+      Total pelanggan aktif: <strong>{{ ringkasan.total_pelanggan }}</strong>
+    </div>
+    <a class="nav-link" href="{{ url_for('petugas_login') }}" style="background:#fff6dc;color:#946c00;">
+      <i class="bi bi-person-badge"></i> Mode Petugas Lapangan
+    </a>
+  </aside>
+
+  <!-- ===================== MAIN ===================== -->
+  <main class="main">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show py-2" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- ===================== RINGKASAN (selalu tampil di atas) ===================== -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3">
+        <div class="stat">
+          <div class="ic" style="background:#eaf3fb;color:#1d5ea8;"><i class="bi bi-people-fill"></i></div>
+          <div><div class="label">Pelanggan Aktif</div><div class="value">{{ ringkasan.total_pelanggan }}</div></div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat">
+          <div class="ic" style="background:#e4f7ea;color:#1e8449;"><i class="bi bi-speedometer2"></i></div>
+          <div>
+            <div class="label">Sudah Tercatat</div>
+            <div class="value">{{ ringkasan.total_tercatat }} <span class="sub">/ {{ ringkasan.total_pelanggan }}</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat">
+          <div class="ic" style="background:#fde8e8;color:#c0392b;"><i class="bi bi-exclamation-triangle-fill"></i></div>
+          <div><div class="label">Kena Abodemen</div><div class="value">{{ ringkasan.jumlah_abodemen }}</div></div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat">
+          <div class="ic" style="background:#fff6dc;color:#946c00;"><i class="bi bi-cash-coin"></i></div>
+          <div><div class="label">Potensi Pendapatan</div><div class="value" style="font-size:1.05rem;">{{ ringkasan.total_pendapatan_potensial|rupiah }}</div></div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat">
+          <div class="ic" style="background:#e3f0ff;color:#1d5ea8;"><i class="bi bi-check-circle-fill"></i></div>
+          <div><div class="label">Sudah Lunas</div><div class="value" style="font-size:1.05rem;">{{ ringkasan.total_lunas|rupiah }}</div></div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat">
+          <div class="ic" style="background:#f4e9fb;color:#7a35a8;"><i class="bi bi-hourglass-split"></i></div>
+          <div><div class="label">Belum Bayar</div><div class="value" style="font-size:1.05rem;">{{ ringkasan.total_belum_bayar|rupiah }}</div></div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat">
+          <div class="ic" style="background:#fde8e8;color:#c0392b;"><i class="bi bi-piggy-bank-fill"></i></div>
+          <div><div class="label">Pendapatan Abodemen</div><div class="value" style="font-size:1.05rem;">{{ ringkasan.total_dari_abodemen|rupiah }}</div></div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <form method="post" action="{{ url_for('generate_tagihan') }}" class="h-100" onsubmit="return confirm('Generate ulang tagihan bulan ini? Tagihan yang belum lunas akan diperbarui, yang sudah lunas tidak diubah.')">
+          <button type="submit" class="btn btn-brand w-100 h-100 d-flex flex-column align-items-center justify-content-center" style="border-radius:14px;">
+            <i class="bi bi-arrow-repeat fs-5"></i>
+            <span class="small mt-1">Generate Tagihan<br>Bulan Ini</span>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    {# ======================================================================
+       TAB: TAGIHAN BULAN INI
+    ====================================================================== #}
+    {% if tab == 'tagihan' %}
+    <div class="section-title">Tagihan Bulan Ini</div>
+    <div class="section-desc">Daftar tagihan periode {{ periode_now_label }}. Gunakan filter untuk mempersempit pencarian.</div>
+
+    <form method="get" class="filterbar row g-2 align-items-end">
+      <input type="hidden" name="tab" value="tagihan">
+      <div class="col-6 col-md-2">
+        <label>RW</label>
+        <select name="t_rw" class="form-select" onchange="this.form.submit()">
+          <option value="">Semua RW</option>
+          {% for rw in rw_list %}<option value="{{ rw }}" {{ 'selected' if t_rw==rw }}>RW {{ rw }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label>RT</label>
+        <select name="t_rt" class="form-select" onchange="this.form.submit()">
+          <option value="">Semua RT</option>
+          {% for rt in t_rt_list %}<option value="{{ rt }}" {{ 'selected' if t_rt==rt }}>RT {{ rt }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label>Golongan</label>
+        <select name="t_golongan" class="form-select" onchange="this.form.submit()">
+          <option value="">Semua Golongan</option>
+          {% for g in golongan_list %}<option value="{{ g }}" {{ 'selected' if t_golongan==g }}>{{ g }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label>Petugas</label>
+        <select name="t_petugas" class="form-select" onchange="this.form.submit()">
+          <option value="">Semua Petugas</option>
+          {% for pt in petugas_list %}<option value="{{ pt }}" {{ 'selected' if t_petugas==pt }}>{{ pt }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label>Jenis</label>
+        <select name="t_jenis" class="form-select" onchange="this.form.submit()">
+          <option value="">Semua Jenis</option>
+          <option value="normal" {{ 'selected' if t_jenis=='normal' }}>Normal</option>
+          <option value="abodemen" {{ 'selected' if t_jenis=='abodemen' }}>Abodemen</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label>Status Bayar</label>
+        <select name="t_status" class="form-select" onchange="this.form.submit()">
+          <option value="">Semua Status</option>
+          <option value="lunas" {{ 'selected' if t_status=='lunas' }}>Lunas</option>
+          <option value="belum_bayar" {{ 'selected' if t_status=='belum_bayar' }}>Belum Bayar</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label>Cari Nama / No. Meteran</label>
+        <input type="text" name="t_q" value="{{ t_q }}" class="form-control" placeholder="ketik lalu Enter">
+      </div>
+      <div class="col-12 d-flex gap-2 mt-2">
+        <button class="btn btn-brand btn-sm px-3"><i class="bi bi-search"></i> Terapkan</button>
+        <a href="{{ page_url(tab='tagihan', t_rw='', t_rt='', t_golongan='', t_petugas='', t_jenis='', t_status='', t_q='', t_page=1) }}" class="btn btn-outline-secondary btn-sm px-3">Reset Filter</a>
+        <a href="{{ url_for('export_tagihan', t_rw=t_rw, t_rt=t_rt, t_golongan=t_golongan, t_petugas=t_petugas, t_jenis=t_jenis, t_status=t_status, t_q=t_q) }}" class="btn btn-outline-brand btn-sm px-3 ms-auto"><i class="bi bi-download"></i> Export CSV</a>
+      </div>
+    </form>
+
+    <form method="post" action="{{ url_for('batch_lunas') }}" onsubmit="return confirm('Tandai lunas semua tagihan yang dicentang?')">
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <div class="count">Menampilkan {{ tagihan_list|length }} dari {{ t_total }} tagihan · centang baris lalu klik "Tandai Lunas Terpilih"</div>
+        <button class="btn btn-sm btn-brand"><i class="bi bi-check2-all"></i> Tandai Lunas Terpilih</button>
+      </div>
+      <div class="table-responsive">
+        <table class="tbl table">
+          <thead><tr>
+            <th style="width:36px; text-align:center;"><input type="checkbox" id="cekSemua" class="form-check-input" title="Pilih semua yang belum lunas" onclick="document.querySelectorAll('input[name=pilih_id]').forEach(c => c.checked = this.checked)"></th>
+            <th>No. Meteran</th><th>Nama</th><th>RT/RW</th><th>Golongan</th>
+            <th>Pemakaian</th><th>Jenis</th><th>Total</th><th>Status</th><th></th>
+          </tr></thead>
+          <tbody>
+            {% for t in tagihan_list %}
+            <tr{% if t.status_bayar=='lunas' %} class="row-lunas"{% endif %}>
+              <td class="text-center">{% if t.status_bayar != 'lunas' %}<input type="checkbox" name="pilih_id" value="{{ t.id }}" class="form-check-input" title="Pilih untuk tandai lunas">{% else %}<input type="checkbox" class="form-check-input" disabled title="Sudah lunas">{% endif %}</td>
+              <td class="text-nowrap">{{ t.nomor_meteran }}</td>
+              <td>{{ t.nama }}</td>
+              <td>{{ t.rt }}/{{ t.rw }}</td>
+              <td>{{ t.golongan_tarif }}</td>
+              <td>{{ t.pemakaian_m3 }} m³</td>
+              <td>{% if t.jenis=='abodemen' %}<span class="badge-x b-abodemen">Abodemen</span>{% else %}<span class="badge-x b-normal">Normal</span>{% endif %}</td>
+              <td class="fw-bold">{{ t.total_tagihan|rupiah }}</td>
+              <td>
+                {% if t.status_bayar=='lunas' %}
+                <span class="badge-x b-lunas">Lunas</span>
+                {% if t.waktu_bayar %}<div class="small text-muted mt-1">{{ t.waktu_bayar }}{% if t.dicatat_oleh %} · {{ t.dicatat_oleh }}{% endif %}</div>{% endif %}
+                {% else %}<span class="badge-x b-belum">Belum Bayar</span>{% endif %}
+              </td>
+              <td class="text-nowrap">
+                {% if t.status_bayar != 'lunas' %}
+                <button type="submit" form="flunas{{ t.id }}" class="btn btn-sm btn-outline-brand"><i class="bi bi-check2"></i> Lunas</button>
+                {% else %}
+                <button type="submit" form="fbatal{{ t.id }}" class="btn btn-sm btn-outline-danger" title="Batalkan pembayaran"><i class="bi bi-arrow-counterclockwise"></i> Batal</button>
+                {% endif %}
+                <a class="btn btn-sm btn-outline-secondary" target="_blank" href="{{ url_for('struk_admin', tagihan_id=t.id) }}" title="Cetak struk"><i class="bi bi-printer"></i></a>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="const nx=this.closest('tr').nextElementSibling; if(nx) nx.style.display = nx.style.display==='none' ? '' : 'none';" title="Lihat rincian tarif"><i class="bi bi-list-ul"></i> Rincian</button>
+              </td>
+            </tr>
+            <tr class="rincian-row" style="display:none;">
+              <td colspan="10" style="background:#f7fafb;">
+                <table class="table table-sm mb-0 small" style="font-size:.78rem;">
+                  <thead><tr><th>Blok</th><th>m³</th><th>Harga / m³</th><th>Subtotal</th></tr></thead>
+                  <tbody>
+                    {% for rr in t.rincian_parsed %}
+                    <tr><td>{{ rr.blok }}</td><td>{{ rr.m3 }}</td><td>{{ rr.harga|rupiah }}</td><td>{{ rr.subtotal|rupiah }}</td></tr>
+                    {% else %}
+                    <tr><td colspan="4" class="text-muted">Tidak ada rincian.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="10" class="text-center text-muted py-5">Tidak ada tagihan yang cocok dengan filter. Coba reset filter atau klik "Generate Tagihan Bulan Ini".</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if t_total_pages > 1 %}
+      <div class="pager">
+        <a class="{{ 'disabled' if t_page<=1 }}" href="{{ page_url(tab='tagihan', t_page=t_page-1) }}">&laquo; Prev</a>
+        <span class="current">{{ t_page }} / {{ t_total_pages }}</span>
+        <a class="{{ 'disabled' if t_page>=t_total_pages }}" href="{{ page_url(tab='tagihan', t_page=t_page+1) }}">Next &raquo;</a>
+      </div>
+      {% endif %}
+    </div>
+    </form>
+    {% for t in tagihan_list %}
+    <form id="flunas{{ t.id }}" method="post" action="{{ url_for('bayar_tagihan', tagihan_id=t.id) }}" onsubmit="return confirm('Tandai tagihan {{ t.nama }} lunas?')"></form>
+    <form id="fbatal{{ t.id }}" method="post" action="{{ url_for('batal_lunas', tagihan_id=t.id) }}" onsubmit="return confirm('Batalkan status lunas tagihan {{ t.nama }}?')"></form>
+    {% endfor %}
+    {% endif %}
+
+    {# ======================================================================
+       TAB: DATA PELANGGAN
+    ====================================================================== #}
+    {% if tab == 'pelanggan' %}
+    {% macro sortlink(col, label) %}
+    <a class="sort-link" href="{{ page_url(tab='pelanggan', p_sort=col, p_arah=('desc' if p_sort==col and p_arah=='asc' else 'asc')) }}">{{ label }}{% if p_sort==col %}<i class="bi bi-caret-{{ 'down-fill' if p_arah=='desc' else 'up-fill' }}"></i>{% endif %}</a>
+    {% endmacro %}
+    <div class="row g-3">
+      <div class="col-lg-8">
+        <div class="section-title">Data Pelanggan</div>
+        <div class="section-desc">Total {{ p_total }} pelanggan pada filter ini. Klik judul kolom untuk mengurutkan, klik nama pelanggan untuk detail & riwayat.</div>
+
+        <form method="get" class="filterbar row g-2 align-items-end">
+          <input type="hidden" name="tab" value="pelanggan">
+          <div class="col-6 col-md-3">
+            <label>RW</label>
+            <select name="p_rw" class="form-select" onchange="this.form.submit()">
+              <option value="">Semua RW</option>
+              {% for rw in rw_list %}<option value="{{ rw }}" {{ 'selected' if p_rw==rw }}>RW {{ rw }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label>RT</label>
+            <select name="p_rt" class="form-select" onchange="this.form.submit()">
+              <option value="">Semua RT</option>
+              {% for rt in p_rt_list %}<option value="{{ rt }}" {{ 'selected' if p_rt==rt }}>RT {{ rt }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label>Golongan</label>
+            <select name="p_golongan" class="form-select" onchange="this.form.submit()">
+              <option value="">Semua Golongan</option>
+              {% for g in golongan_list %}<option value="{{ g }}" {{ 'selected' if p_golongan==g }}>{{ g }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label>Petugas</label>
+            <select name="p_petugas" class="form-select" onchange="this.form.submit()">
+              <option value="">Semua Petugas</option>
+              {% for pt in petugas_list %}<option value="{{ pt }}" {{ 'selected' if p_petugas==pt }}>{{ pt }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label>Status Catat</label>
+            <select name="p_status" class="form-select" onchange="this.form.submit()">
+              <option value="">Semua Status</option>
+              <option value="tercatat" {{ 'selected' if p_status=='tercatat' }}>Sudah Dicatat</option>
+              <option value="belum" {{ 'selected' if p_status=='belum' }}>Belum Dicatat</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label>Status Aktif</label>
+            <select name="p_aktif" class="form-select" onchange="this.form.submit()">
+              <option value="1" {{ 'selected' if p_aktif=='1' }}>Aktif</option>
+              <option value="0" {{ 'selected' if p_aktif=='0' }}>Nonaktif</option>
+              <option value="" {{ 'selected' if p_aktif=='' }}>Semua</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-6">
+            <label>Cari Nama / No. Meteran / Alamat</label>
+            <input type="text" name="p_q" value="{{ p_q }}" class="form-control" placeholder="ketik lalu Enter">
+          </div>
+          <div class="col-12 d-flex gap-2 mt-1">
+            <button class="btn btn-brand btn-sm px-3"><i class="bi bi-search"></i> Terapkan</button>
+            <a href="{{ page_url(tab='pelanggan', p_rw='', p_rt='', p_golongan='', p_petugas='', p_status='', p_aktif='1', p_q='', p_page=1, p_sort='rw', p_arah='asc') }}" class="btn btn-outline-secondary btn-sm px-3">Reset Filter</a>
+          </div>
+        </form>
+
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <div class="count">Menampilkan {{ pelanggan_list|length }} dari {{ p_total }} pelanggan</div>
+            <a class="btn btn-sm btn-outline-brand" href="{{ url_for('export_pelanggan', p_rw=p_rw, p_rt=p_rt, p_golongan=p_golongan, p_petugas=p_petugas, p_status=p_status, p_aktif=p_aktif, p_q=p_q) }}"><i class="bi bi-download"></i> Export CSV</a>
+          </div>
+          <div class="table-responsive">
+            <table class="tbl table">
+              <thead><tr>
+                <th>{{ sortlink('nomor_meteran', 'No. Meteran') }}</th>
+                <th>{{ sortlink('nama', 'Nama') }}</th>
+                <th>{{ sortlink('alamat', 'Alamat') }}</th>
+                <th>{{ sortlink('rt', 'RT/RW') }}</th>
+                <th>{{ sortlink('golongan', 'Golongan') }}</th>
+                <th>{{ sortlink('meteran_awal', 'Meter Awal') }}</th>
+                <th>{{ sortlink('petugas', 'Petugas') }}</th>
+                <th>Status Catat</th>
+                <th>Status Aktif</th>
+                <th></th>
+              </tr></thead>
+              <tbody>
+                {% for p in pelanggan_list %}
+                <tr{% if baru_id and p.id|string == baru_id %} class="table-highlight"{% endif %}>
+                  <td class="text-nowrap">{{ p.nomor_meteran }}</td>
+                  <td><a href="{{ url_for('detail_pelanggan', pelanggan_id=p.id) }}" class="fw-semibold text-decoration-none">{{ p.nama }}</a></td>
+                  <td>{{ p.alamat }}</td>
+                  <td>{{ p.rt }}/{{ p.rw }}</td>
+                  <td>{{ p.golongan_tarif }}</td>
+                  <td>{{ p.meteran_awal }}</td>
+                  <td>{{ p.petugas or '-' }}</td>
+                  <td>{% if p.id in tercatat_ids %}<span class="badge-x b-normal">Sudah Dicatat</span>{% else %}<span class="badge-x b-abodemen">Belum Dicatat</span>{% endif %}</td>
+                  <td>{% if p.aktif %}<span class="badge-x b-normal">Aktif</span>{% else %}<span class="badge-x b-nonaktif">Nonaktif</span>{% endif %}</td>
+                  <td class="text-nowrap">
+                    {% if p.id not in tercatat_ids %}
+                    <a class="btn btn-sm btn-brand" href="{{ url_for('index', tab='catat', prefill_pelanggan_id=p.id) }}" title="Langsung isi pencatatan untuk pelanggan ini"><i class="bi bi-pencil-square"></i> Catat</a>
+                    {% endif %}
+                    <a class="btn btn-sm btn-outline-brand" href="{{ url_for('detail_pelanggan', pelanggan_id=p.id) }}" title="Detail & riwayat pelanggan"><i class="bi bi-eye"></i> Detail</a>
+                  </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="10" class="text-center text-muted py-5">Tidak ada pelanggan yang cocok dengan filter.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% if p_total_pages > 1 %}
+          <div class="pager">
+            <a class="{{ 'disabled' if p_page<=1 }}" href="{{ page_url(tab='pelanggan', p_page=p_page-1) }}">&laquo; Prev</a>
+            <span class="current">{{ p_page }} / {{ p_total_pages }}</span>
+            <a class="{{ 'disabled' if p_page>=p_total_pages }}" href="{{ page_url(tab='pelanggan', p_page=p_page+1) }}">Next &raquo;</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="col-lg-4 d-flex flex-column gap-3">
+        <div class="card-x p-3">
+          <div class="section-title" style="font-size:.95rem;"><i class="bi bi-person-plus"></i> Tambah Pelanggan Baru</div>
+          <form method="post" action="{{ url_for('tambah_pelanggan') }}" class="mt-2">
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Nomor Meteran</label>
+              <input type="text" name="nomor_meteran" class="form-control form-control-sm" required>
+              <div class="form-text" id="hintNomor"></div>
+            </div>
+            <div class="mb-2"><label class="form-label small fw-semibold">Nama</label><input type="text" name="nama" class="form-control form-control-sm" required></div>
+            <div class="mb-2"><label class="form-label small fw-semibold">Alamat</label><input type="text" name="alamat" class="form-control form-control-sm"></div>
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small fw-semibold">RT</label>
+                <select name="rt" class="form-select form-select-sm">
+                  <option value="">— pilih —</option>
+                  {% for i in range(1, 21) %}<option value="{{ i }}">RT {{ i }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-semibold">RW</label>
+                <select name="rw" class="form-select form-select-sm">
+                  <option value="">— pilih —</option>
+                  {% for i in range(1, 21) %}<option value="{{ i }}">RW {{ i }}</option>{% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Golongan Tarif</label>
+              <select name="golongan_tarif" class="form-select form-select-sm" required>
+                {% for g in golongan_list %}<option value="{{ g }}">{{ g }}</option>{% endfor %}
+              </select>
+            </div>
+            <div class="mb-2"><label class="form-label small fw-semibold">Meteran Awal</label><input type="number" name="meteran_awal" class="form-control form-control-sm" value="0" required></div>
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Petugas</label>
+              <input type="text" name="petugas" class="form-control form-control-sm" list="petugasList" placeholder="pilih atau ketik nama">
+              <datalist id="petugasList">{% for pt in petugas_list %}<option value="{{ pt }}">{% endfor %}</datalist>
+            </div>
+            <div class="mb-3"><label class="form-label small fw-semibold">No. HP / Kontak</label><input type="text" name="kontak" class="form-control form-control-sm" placeholder="opsional"></div>
+            <button type="submit" class="btn btn-brand btn-sm w-100">Simpan Pelanggan</button>
+          </form>
+        </div>
+
+        <div class="card-x p-3">
+          <div class="section-title" style="font-size:.95rem;"><i class="bi bi-upload"></i> Import Massal (CSV)</div>
+          <p class="small text-muted mt-1 mb-2">Tambahkan banyak pelanggan sekaligus dari file CSV.
+            <a href="{{ url_for('template_import_pelanggan') }}"><i class="bi bi-download"></i> Unduh template CSV</a>
+          </p>
+          <form method="post" action="{{ url_for('import_pelanggan') }}" enctype="multipart/form-data" class="mt-1">
+            <div class="mb-2">
+              <input type="file" name="file_csv" class="form-control form-control-sm" accept=".csv,text/csv" required>
+            </div>
+            <button type="submit" class="btn btn-outline-brand btn-sm w-100"><i class="bi bi-upload"></i> Upload & Import</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <script>
+    // cek duplikat nomor meteran langsung saat mengetik di form tambah
+    const NOMOR_TERDAFTAR = new Set({{ nomor_terdaftar_json|safe }});
+    const inputNomor = document.querySelector('input[name="nomor_meteran"]');
+    const hintNomor = document.getElementById('hintNomor');
+    inputNomor.addEventListener('input', function () {
+      const v = this.value.trim().toUpperCase();
+      if (!v) { hintNomor.textContent = ''; this.classList.remove('is-invalid'); return; }
+      if (NOMOR_TERDAFTAR.has(v)) {
+        hintNomor.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-circle"></i> Nomor meteran ini sudah terdaftar.</span>';
+        this.classList.add('is-invalid');
+      } else {
+        hintNomor.innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> Nomor meteran tersedia.</span>';
+        this.classList.remove('is-invalid');
+      }
+    });
+    </script>
+    {% if baru_id %}
+    <script>
+      const barisBaru = document.querySelector('tr.table-highlight');
+      if (barisBaru) barisBaru.scrollIntoView({behavior:'smooth', block:'center'});
+    </script>
+    {% endif %}
+    {% endif %}
+
+    {# ======================================================================
+       TAB: INPUT PENCATATAN (wizard RW -> RT -> Nama, upload foto, anomali)
+    ====================================================================== #}
+    {% if tab == 'catat' %}
+    <div class="section-title">Input Pencatatan Meteran</div>
+    <div class="section-desc">Periode {{ periode_now_label }}. Pilih pelanggan lewat RW → RT → Nama, atau cari langsung.</div>
+
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="step-box">
+          <form method="post" action="{{ url_for('tambah_pencatatan') }}" enctype="multipart/form-data" id="formCatat">
+            <div class="mb-3">
+              <span class="step-num">1</span><strong>Cari cepat (opsional)</strong>
+              <input type="text" id="cariCepat" class="form-control form-control-sm mt-2" placeholder="Ketik nama atau nomor meteran...">
+            </div>
+
+            <div class="row g-2 mb-3 wizard-row">
+              <div class="col-4">
+                <label class="form-label small fw-semibold"><span class="step-num">2</span>RW</label>
+                <select id="selRW" class="form-select form-select-sm">
+                  <option value="">Pilih RW</option>
+                </select>
+              </div>
+              <div class="col-4">
+                <label class="form-label small fw-semibold">RT</label>
+                <select id="selRT" class="form-select form-select-sm" disabled>
+                  <option value="">Pilih RT</option>
+                </select>
+              </div>
+              <div class="col-4">
+                <label class="form-label small fw-semibold">Nama</label>
+                <select id="selNama" name="pelanggan_id" class="form-select form-select-sm" required disabled>
+                  <option value="">Pilih Nama</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="infoPelanggan" class="info-pelanggan mb-3" style="display:none;"></div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold"><span class="step-num">3</span>Meteran Akhir (hasil baca bulan ini)</label>
+              <input type="number" name="meteran_akhir" id="inputAkhir" class="form-control" required>
+              <div class="form-text" id="hintPakai"></div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Foto Bukti Meteran <span class="text-danger">(wajib)</span></label>
+              <div class="dropzone" onclick="document.getElementById('fileFoto').click()">
+                <i class="bi bi-camera fs-3 text-secondary"></i>
+                <div class="small text-muted mt-1">Klik untuk pilih foto wajib (JPG/PNG/WEBP, maks 5MB)</div>
+                <img id="previewFoto" style="display:none;">
+              </div>
+              <input type="file" id="fileFoto" name="foto_file" accept="image/jpeg,image/png,image/webp" style="display:none;">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Alasan / Catatan (wajib jika ada kejanggalan)</label>
+              <input type="text" name="alasan" class="form-control form-control-sm" placeholder="contoh: kebocoran pipa, meteran diganti, dll">
+            </div>
+
+            <div class="form-check mb-3" id="boxKonfirmasi" style="display:none;">
+              <input class="form-check-input" type="checkbox" name="konfirmasi_anomali" value="1" id="ckKonfirmasi">
+              <label class="form-check-label small" for="ckKonfirmasi">
+                Saya sudah memeriksa ulang dan yakin angka meteran ini benar meskipun tidak biasa.
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-brand w-100"><i class="bi bi-save"></i> Simpan Pencatatan</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="card-x p-3">
+          <div class="section-title" style="font-size:.95rem;"><i class="bi bi-shield-check"></i> Pencegahan Anomali</div>
+          <ul class="small text-muted mb-0 ps-3">
+            <li class="mb-2">Meteran akhir tidak boleh lebih kecil dari meteran awal — sistem menolak otomatis.</li>
+            <li class="mb-2">Jika pemakaian bulan ini <strong>&gt; 3x</strong> atau <strong>&lt; 0.2x</strong> rata-rata 6 bulan terakhir pelanggan tersebut, sistem menampilkan peringatan dan meminta konfirmasi + alasan sebelum data disimpan.</li>
+            <li class="mb-2">Foto meteran disimpan sebagai bukti fisik, membantu verifikasi bila ada sengketa tagihan.</li>
+            <li>Nomor meteran & periode bersifat unik — pencatatan ganda pada bulan yang sama akan menimpa data lama, bukan dobel.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const DATA_PELANGGAN = {{ pelanggan_json|safe }};
+      const PREFILL_ID = "{{ prefill }}";
+
+      const selRW = document.getElementById('selRW');
+      const selRT = document.getElementById('selRT');
+      const selNama = document.getElementById('selNama');
+      const cariCepat = document.getElementById('cariCepat');
+      const infoBox = document.getElementById('infoPelanggan');
+      const hintPakai = document.getElementById('hintPakai');
+      const inputAkhir = document.getElementById('inputAkhir');
+      const boxKonfirmasi = document.getElementById('boxKonfirmasi');
+
+      // isi opsi RW
+      [...new Set(DATA_PELANGGAN.map(p => p.rw))].sort().forEach(rw => {
+        selRW.insertAdjacentHTML('beforeend', `<option value="${rw}">RW ${rw}</option>`);
+      });
+
+      function isiRT(rw) {
+        selRT.innerHTML = '<option value="">Pilih RT</option>';
+        selNama.innerHTML = '<option value="">Pilih Nama</option>';
+        selNama.disabled = true;
+        if (!rw) { selRT.disabled = true; return; }
+        const rts = [...new Set(DATA_PELANGGAN.filter(p => p.rw === rw).map(p => p.rt))].sort();
+        rts.forEach(rt => selRT.insertAdjacentHTML('beforeend', `<option value="${rt}">RT ${rt}</option>`));
+        selRT.disabled = false;
+      }
+
+      function isiNama(rw, rt) {
+        selNama.innerHTML = '<option value="">Pilih Nama</option>';
+        if (!rw || !rt) { selNama.disabled = true; return; }
+        // hanya pelanggan yang belum tercatat periode ini yang ditampilkan
+        const list = DATA_PELANGGAN.filter(p => p.rw === rw && p.rt === rt && !p.sudah_periode_ini);
+        list.forEach(p => {
+          selNama.insertAdjacentHTML('beforeend', `<option value="${p.id}">${p.nomor_meteran} — ${p.nama}</option>`);
+        });
+        selNama.disabled = false;
+      }
+
+      selRW.addEventListener('change', () => isiRT(selRW.value));
+      selRT.addEventListener('change', () => isiNama(selRW.value, selRT.value));
+
+      selNama.addEventListener('change', () => tampilkanInfo(selNama.value));
+
+      function tampilkanInfo(id) {
+        const p = DATA_PELANGGAN.find(x => String(x.id) === String(id));
+        if (!p) { infoBox.style.display = 'none'; return; }
+        const meterAwal = p.last_akhir ?? p.meteran_awal;
+        infoBox.innerHTML = `
+          <div class="d-flex justify-content-between"><span>Golongan Tarif</span><strong>${p.golongan_tarif}</strong></div>
+          <div class="d-flex justify-content-between"><span>Meteran Awal Periode Ini</span><strong>${meterAwal}</strong></div>
+        `;
+        infoBox.style.display = 'block';
+        inputAkhir.min = meterAwal;
+        inputAkhir.dataset.awal = meterAwal;
+        hintKalkulasi();
+      }
+
+      inputAkhir.addEventListener('input', hintKalkulasi);
+      function hintKalkulasi() {
+        const awal = parseFloat(inputAkhir.dataset.awal || 0);
+        const akhir = parseFloat(inputAkhir.value || 0);
+        if (!inputAkhir.value) { hintPakai.textContent = ''; return; }
+        const pakai = akhir - awal;
+        if (pakai < 0) {
+          hintPakai.innerHTML = '<span class="text-danger fw-semibold">⚠ Meteran akhir lebih kecil dari meteran awal, periksa kembali.</span>';
+        } else {
+          hintPakai.innerHTML = `Pemakaian: <strong>${pakai} m³</strong>`;
+        }
+      }
+
+      // pencarian cepat -> auto pilih RW/RT/Nama (hanya yang belum tercatat)
+      cariCepat.addEventListener('input', () => {
+        const q = cariCepat.value.trim().toLowerCase();
+        if (q.length < 2) return;
+        const found = DATA_PELANGGAN.find(p => !p.sudah_periode_ini && (p.nama.toLowerCase().includes(q) || p.nomor_meteran.toLowerCase().includes(q)));
+        if (found) {
+          selRW.value = found.rw; isiRT(found.rw);
+          selRT.value = found.rt; isiNama(found.rw, found.rt);
+          selNama.value = found.id; tampilkanInfo(found.id);
+        }
+      });
+
+      // preview foto
+      document.getElementById('fileFoto').addEventListener('change', function () {
+        const file = this.files[0];
+        const prev = document.getElementById('previewFoto');
+        if (file) {
+          prev.src = URL.createObjectURL(file);
+          prev.style.display = 'block';
+        }
+      });
+
+      // prefill pelanggan: dari pintasan "Catat" di tabel pelanggan, atau redirect balik saat anomali
+      {% if prefill %}
+        const pf = DATA_PELANGGAN.find(x => String(x.id) === "{{ prefill }}");
+        if (pf) {
+          selRW.value = pf.rw; isiRT(pf.rw);
+          selRT.value = pf.rt; isiNama(pf.rw, pf.rt);
+          selNama.value = pf.id; tampilkanInfo(pf.id);
+          document.getElementById('inputAkhir').focus();
+        }
+        {% if prefill_anomali %}boxKonfirmasi.style.display = 'block';{% endif %}
+      {% endif %}
+    </script>
+    {% endif %}
+
+    {# ======================================================================
+       TAB: LAPORAN
+    ====================================================================== #}
+    {% if tab == 'laporan' %}
+    <div class="section-title">Laporan</div>
+    <div class="section-desc">Rekap tagihan berdasarkan rentang periode dan filter pilihan Anda.</div>
+
+    <form method="get" class="filterbar row g-2 align-items-end">
+      <input type="hidden" name="tab" value="laporan">
+      <div class="col-6 col-md-2">
+        <label>Periode Awal</label>
+        <select name="l_awal" class="form-select">
+          {% for pr in periode_list %}<option value="{{ pr }}" {{ 'selected' if l_awal==pr }}>{{ periode_label(pr) }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label>Periode Akhir</label>
+        <select name="l_akhir" class="form-select">
+          {% for pr in periode_list %}<option value="{{ pr }}" {{ 'selected' if l_akhir==pr }}>{{ periode_label(pr) }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label>RW</label>
+        <select name="l_rw" class="form-select">
+          <option value="">Semua RW</option>
+          {% for rw in rw_list %}<option value="{{ rw }}" {{ 'selected' if l_rw==rw }}>RW {{ rw }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label>RT</label>
+        <select name="l_rt" class="form-select">
+          <option value="">Semua RT</option>
+          {% for rt in l_rt_list %}<option value="{{ rt }}" {{ 'selected' if l_rt==rt }}>RT {{ rt }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label>Golongan</label>
+        <select name="l_golongan" class="form-select">
+          <option value="">Semua</option>
+          {% for g in golongan_list %}<option value="{{ g }}" {{ 'selected' if l_golongan==g }}>{{ g }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label>Jenis</label>
+        <select name="l_jenis" class="form-select">
+          <option value="">Semua</option>
+          <option value="normal" {{ 'selected' if l_jenis=='normal' }}>Normal</option>
+          <option value="abodemen" {{ 'selected' if l_jenis=='abodemen' }}>Abodemen</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label>Status Bayar</label>
+        <select name="l_status" class="form-select">
+          <option value="">Semua</option>
+          <option value="lunas" {{ 'selected' if l_status=='lunas' }}>Lunas</option>
+          <option value="belum_bayar" {{ 'selected' if l_status=='belum_bayar' }}>Belum Bayar</option>
+        </select>
+      </div>
+      <div class="col-12 d-flex gap-2 mt-2">
+        <button class="btn btn-brand btn-sm px-3"><i class="bi bi-search"></i> Tampilkan Laporan</button>
+        <a href="{{ page_url(tab='laporan', l_awal=periode, l_akhir=periode, l_rw='', l_rt='', l_golongan='', l_jenis='', l_status='', l_page=1) }}" class="btn btn-outline-secondary btn-sm px-3">Reset</a>
+        <a href="{{ url_for('export_laporan', l_awal=l_awal, l_akhir=l_akhir, l_rw=l_rw, l_rt=l_rt, l_golongan=l_golongan, l_jenis=l_jenis, l_status=l_status) }}" class="btn btn-outline-brand btn-sm px-3 ms-auto"><i class="bi bi-download"></i> Export CSV</a>
+        <a href="{{ url_for('cetak_laporan', l_awal=l_awal, l_akhir=l_akhir, l_rw=l_rw, l_rt=l_rt, l_golongan=l_golongan, l_jenis=l_jenis, l_status=l_status) }}" target="_blank" class="btn btn-outline-secondary btn-sm px-3"><i class="bi bi-printer"></i> Cetak</a>
+      </div>
+    </form>
+
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-md-3">
+        <div class="stat"><div class="ic" style="background:#eaf3fb;color:#1d5ea8;"><i class="bi bi-receipt-cutoff"></i></div>
+          <div><div class="label">Jumlah Tagihan</div><div class="value">{{ l_agg.n }}</div>
+          <div class="small text-muted">{{ l_agg.total_m3 }} m³ pemakaian</div></div></div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat"><div class="ic" style="background:#fff6dc;color:#946c00;"><i class="bi bi-cash-stack"></i></div>
+          <div><div class="label">Total Nominal</div><div class="value" style="font-size:1.05rem;">{{ l_agg.total|rupiah }}</div>
+          <div class="small text-muted">abodemen {{ l_agg.abodemen|rupiah }}</div></div></div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat"><div class="ic" style="background:#e3f0ff;color:#1d5ea8;"><i class="bi bi-check-circle"></i></div>
+          <div><div class="label">Sudah Lunas</div><div class="value" style="font-size:1.05rem;">{{ l_agg.lunas|rupiah }}</div>
+          <div class="small text-muted">{{ l_agg.persen_lunas }}% tertagih</div></div></div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat"><div class="ic" style="background:#fde8e8;color:#c0392b;"><i class="bi bi-hourglass-split"></i></div>
+          <div><div class="label">Belum Bayar</div><div class="value" style="font-size:1.05rem;">{{ l_agg.belum|rupiah }}</div>
+          <div class="small text-muted">{{ 100 - l_agg.persen_lunas }}% belum tertagih</div></div></div>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-lg-8">
+        <div class="card-x p-3 h-100">
+          <div class="section-title" style="font-size:.95rem;"><i class="bi bi-bar-chart"></i> Tren Tagihan per Bulan</div>
+          <div style="height:280px;"><canvas id="chartTren"></canvas></div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="table-wrap h-100">
+          <div class="table-toolbar"><div class="count fw-bold" style="color:var(--ink);">Rekap per RW</div></div>
+          <div class="table-responsive">
+            <table class="tbl table">
+              <thead><tr><th>RW</th><th>Tagihan</th><th>Lunas</th><th>Belum</th></tr></thead>
+              <tbody>
+                {% for rr in l_per_rw %}
+                <tr>
+                  <td class="fw-semibold">RW {{ rr.rw }}</td>
+                  <td>{{ rr.total|rupiah }}</td>
+                  <td class="text-success">{{ rr.lunas|rupiah }}</td>
+                  <td class="text-danger">{{ (rr.total - rr.lunas)|rupiah }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center text-muted py-4">Tidak ada data pada filter ini.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-12">
+        <div class="table-wrap">
+          <div class="table-toolbar">
+            <div class="count fw-bold" style="color:var(--ink);">Detail Transaksi</div>
+            <div class="count">Menampilkan {{ laporan_list|length }} dari {{ l_total }} baris</div>
+          </div>
+          <div class="table-responsive">
+            <table class="tbl table">
+              <thead><tr><th>Periode</th><th>No. Meteran</th><th>Nama</th><th>RT/RW</th><th>Golongan</th><th>Jenis</th><th>m³</th><th>Total</th><th>Status</th></tr></thead>
+              <tbody>
+                {% for r in laporan_list %}
+                <tr>
+                  <td>{{ periode_label(r.periode) }}</td>
+                  <td class="text-nowrap">{{ r.nomor_meteran }}</td>
+                  <td>{{ r.nama }}</td>
+                  <td>{{ r.rt }}/{{ r.rw }}</td>
+                  <td>{{ r.golongan_tarif }}</td>
+                  <td>{% if r.jenis=='abodemen' %}<span class="badge-x b-abodemen">Abodemen</span>{% else %}<span class="badge-x b-normal">Normal</span>{% endif %}</td>
+                  <td>{{ r.pemakaian_m3 }}</td>
+                  <td class="fw-semibold">{{ r.total_tagihan|rupiah }}</td>
+                  <td>{% if r.status_bayar=='lunas' %}<span class="badge-x b-lunas">Lunas</span>{% else %}<span class="badge-x b-belum">Belum</span>{% endif %}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9" class="text-center text-muted py-5">Tidak ada data pada rentang/filter ini.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% if l_total_pages > 1 %}
+          <div class="pager">
+            <a class="{{ 'disabled' if l_page<=1 }}" href="{{ page_url(tab='laporan', l_page=l_page-1) }}">&laquo; Prev</a>
+            <span class="current">{{ l_page }} / {{ l_total_pages }}</span>
+            <a class="{{ 'disabled' if l_page>=l_total_pages }}" href="{{ page_url(tab='laporan', l_page=l_page+1) }}">Next &raquo;</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-lg-4">
+        <div class="table-wrap h-100">
+          <div class="table-toolbar"><div class="count fw-bold" style="color:var(--ink);">Rekap per Golongan</div></div>
+          <div class="p-3">
+            {% for gg in l_per_golongan %}
+            <div class="recap-pill">
+              <span>{{ gg.golongan_tarif }} <span class="text-muted">({{ gg.n }})</span></span>
+              <strong>{{ gg.total|rupiah }}</strong>
+            </div>
+            {% else %}
+            <div class="text-muted small text-center py-3">Tidak ada data pada filter ini.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-8">
+        <div class="table-wrap h-100">
+          <div class="table-toolbar">
+            <div class="count fw-bold" style="color:var(--ink);">Tunggakan per Pelanggan</div>
+            <div class="count text-muted">{{ tunggakan_total }} pelanggan · semua periode</div>
+          </div>
+          <div class="table-responsive">
+            <table class="tbl table">
+              <thead><tr><th>No. Meteran</th><th>Nama</th><th>RT/RW</th><th>Jumlah Bulan</th><th>Total Tunggakan</th></tr></thead>
+              <tbody>
+                {% for tg in tunggakan_list %}
+                <tr>
+                  <td class="text-nowrap">{{ tg.nomor_meteran }}</td>
+                  <td>{{ tg.nama }}</td>
+                  <td>{{ tg.rt }}/{{ tg.rw }}</td>
+                  <td>{{ tg.n_bulan }}</td>
+                  <td class="fw-semibold text-danger">{{ tg.total|rupiah }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Tidak ada tunggakan.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% if tunggakan_total_pages > 1 %}
+          <div class="pager">
+            <a class="{{ 'disabled' if l_tunggakan_page<=1 }}" href="{{ page_url(tab='laporan', lt_page=l_tunggakan_page-1) }}">&laquo; Prev</a>
+            <span class="current">{{ l_tunggakan_page }} / {{ tunggakan_total_pages }}</span>
+            <a class="{{ 'disabled' if l_tunggakan_page>=tunggakan_total_pages }}" href="{{ page_url(tab='laporan', lt_page=l_tunggakan_page+1) }}">Next &raquo;</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+    const TREN_DATA = {{ tren_json|safe }};
+    new Chart(document.getElementById('chartTren'), {
+      type: 'bar',
+      data: {
+        labels: TREN_DATA.labels,
+        datasets: [
+          { label: 'Total Tagihan (Rp)', data: TREN_DATA.total, backgroundColor: 'rgba(14,127,174,.75)', borderRadius: 6, yAxisID: 'y' },
+          { label: 'Pemakaian (m³)', data: TREN_DATA.m3, type: 'line', borderColor: '#1e8449', backgroundColor: '#1e8449', tension: .3, yAxisID: 'y1' }
+        ]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { boxWidth: 12 } } },
+        scales: {
+          y: { beginAtZero: true, ticks: { callback: v => 'Rp ' + (+v).toLocaleString('id-ID') } },
+          y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: v => v + ' m³' } }
+        }
+      }
+    });
+    </script>
+    {% endif %}
+
+    {# ======================================================================
+       TAB: TARIF PROGRESIF
+    ====================================================================== #}
+    {% if tab == 'tarif' %}
+    <div class="section-title">Tarif Progresif</div>
+    <div class="section-desc">Blok tarif per golongan pelanggan. Batas atas kosong berarti "tak terbatas" (hanya untuk blok terakhir). Perubahan harga hanya berlaku untuk pencatatan berikutnya — tagihan yang sudah dibuat tidak berubah.</div>
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="table-wrap">
+          <div class="table-responsive">
+            <table class="tbl table">
+              <thead><tr><th>Golongan</th><th>Blok (m³)</th><th>Harga / m³</th><th></th></tr></thead>
+              <tbody>
+                {% for t in tarif_list %}
+                <tr{% if tarif_edit_row and t.id == tarif_edit_row.id %} class="table-highlight"{% endif %}>
+                  <td>{{ t.golongan_tarif }}</td>
+                  <td>{{ t.batas_bawah }} – {{ t.batas_atas if t.batas_atas is not none else "ke atas" }}</td>
+                  <td>{{ t.harga_per_m3|rupiah }}</td>
+                  <td class="text-nowrap">
+                    <a class="btn btn-sm btn-outline-brand" href="{{ page_url(tab='tarif', tarif_edit=t.id) }}"><i class="bi bi-pencil"></i> Ubah</a>
+                    <form method="post" action="{{ url_for('hapus_tarif', tarif_id=t.id) }}" class="d-inline" onsubmit="return confirm('Hapus blok {{ t.golongan_tarif }} {{ t.batas_bawah }}-{{ t.batas_atas or 'ke atas' }}?')">
+                      <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Hapus</button>
+                    </form>
+                  </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center text-muted py-5">Belum ada blok tarif. Tambahkan lewat form di samping.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5 d-flex flex-column gap-3">
+        <div class="card-x p-3">
+          <div class="section-title" style="font-size:.95rem;"><i class="bi bi-gear"></i> Pengaturan Abodemen</div>
+          <form method="post" action="{{ url_for('simpan_abodemen') }}" class="mt-2">
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Nilai Abodemen per Bulan (Rp)</label>
+              <input type="number" name="abodemen" class="form-control form-control-sm" value="{{ abodemen }}" required min="0">
+            </div>
+            <button type="submit" class="btn btn-brand btn-sm w-100"><i class="bi bi-save"></i> Simpan Nilai Abodemen</button>
+          </form>
+          <div class="small text-muted mt-2">Berlaku untuk pencatatan & generate tagihan berikutnya. Tagihan yang sudah dibuat tidak berubah.</div>
+        </div>
+
+        <div class="card-x p-3">
+          {% if tarif_edit_row %}
+          <div class="section-title" style="font-size:.95rem;"><i class="bi bi-pencil-square"></i> Ubah Blok Tarif</div>
+          <form method="post" action="{{ url_for('ubah_tarif', tarif_id=tarif_edit_row.id) }}" class="mt-2">
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Golongan Tarif</label>
+              <input type="text" name="golongan_tarif" class="form-control form-control-sm" required list="golonganList" value="{{ tarif_edit_row.golongan_tarif }}">
+              <datalist id="golonganList">{% for g in golongan_list %}<option value="{{ g }}">{% endfor %}</datalist>
+            </div>
+            <div class="row g-2 mb-2">
+              <div class="col-6"><label class="form-label small fw-semibold">Batas Bawah</label><input type="number" name="batas_bawah" class="form-control form-control-sm" required value="{{ tarif_edit_row.batas_bawah }}"></div>
+              <div class="col-6"><label class="form-label small fw-semibold">Batas Atas</label><input type="number" name="batas_atas" class="form-control form-control-sm" placeholder="kosong = tak terbatas" value="{{ tarif_edit_row.batas_atas if tarif_edit_row.batas_atas is not none else '' }}"></div>
+            </div>
+            <div class="mb-3"><label class="form-label small fw-semibold">Harga per m³ (Rp)</label><input type="number" name="harga_per_m3" class="form-control form-control-sm" required value="{{ tarif_edit_row.harga_per_m3 }}"></div>
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-brand btn-sm flex-fill"><i class="bi bi-save"></i> Simpan Perubahan</button>
+              <a href="{{ page_url(tab='tarif', tarif_edit='') }}" class="btn btn-outline-secondary btn-sm flex-fill">Batal</a>
+            </div>
+          </form>
+          {% else %}
+          <div class="section-title" style="font-size:.95rem;"><i class="bi bi-plus-circle"></i> Tambah Blok Tarif</div>
+          <form method="post" action="{{ url_for('tambah_tarif') }}" class="mt-2">
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Golongan Tarif</label>
+              <input type="text" name="golongan_tarif" class="form-control form-control-sm" required list="golonganList" placeholder="pilih atau ketik nama golongan">
+              <datalist id="golonganList">{% for g in golongan_list %}<option value="{{ g }}">{% endfor %}</datalist>
+            </div>
+            <div class="row g-2 mb-2">
+              <div class="col-6"><label class="form-label small fw-semibold">Batas Bawah</label><input type="number" name="batas_bawah" class="form-control form-control-sm" required></div>
+              <div class="col-6"><label class="form-label small fw-semibold">Batas Atas</label><input type="number" name="batas_atas" class="form-control form-control-sm" placeholder="kosong = tak terbatas"></div>
+            </div>
+            <div class="mb-3"><label class="form-label small fw-semibold">Harga per m³ (Rp)</label><input type="number" name="harga_per_m3" class="form-control form-control-sm" required></div>
+            <button type="submit" class="btn btn-brand btn-sm w-100">Simpan Blok Tarif</button>
+          </form>
+          {% endif %}
+        </div>
+
+        <div class="card-x p-3">
+          <div class="section-title" style="font-size:.95rem;"><i class="bi bi-calculator"></i> Simulasi Tagihan</div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Golongan</label>
+            <select id="simGolongan" class="form-select form-select-sm">
+              {% for g in golongan_list %}<option value="{{ g }}">{{ g }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Pemakaian (m³)</label>
+            <input type="number" id="simPakai" class="form-control form-control-sm" min="0" value="10">
+          </div>
+          <div class="small" id="simHasil"></div>
+        </div>
+      </div>
+    </div>
+    <script>
+    const TARIF_DATA = {{ tarif_json|safe }};
+    const ABODEMEN_SIM = {{ abodemen }};
+    const elGol = document.getElementById('simGolongan');
+    const elPakai = document.getElementById('simPakai');
+    const elHasil = document.getElementById('simHasil');
+    function hitungSimulasi(){
+      const g = elGol.value;
+      const pakai = parseFloat(elPakai.value || '0');
+      const blok = TARIF_DATA[g] || [];
+      let total = 0, prevAtas = 0;
+      const baris = [];
+      for (const b of blok) {
+        const tierAtas = b.atas ?? pakai;
+        if (tierAtas < prevAtas) continue;
+        const m3 = Math.max(0, Math.min(pakai, tierAtas) - prevAtas);
+        if (m3 > 0) {
+          const sub = m3 * b.harga;
+          total += sub;
+          baris.push(`Blok ${prevAtas + 1}-${b.atas ?? 'ke atas'}: ${m3} m³ × ${b.harga.toLocaleString('id-ID')} = Rp ${sub.toLocaleString('id-ID')}`);
+        }
+        prevAtas = tierAtas;
+        if (pakai <= tierAtas) break;
+      }
+      baris.push(`Abodemen: Rp ${ABODEMEN_SIM.toLocaleString('id-ID')}`);
+      total += ABODEMEN_SIM;
+      if (!blok.length) {
+        elHasil.innerHTML = '<span class="text-muted">Golongan ini belum punya blok tarif.</span>';
+        return;
+      }
+      elHasil.innerHTML = baris.map(b => `<div class="d-flex justify-content-between gap-2 my-1"><span>${b}</span></div>`).join('')
+        + `<div class="d-flex justify-content-between fw-bold border-top mt-2 pt-1"><span>Total Tagihan</span><span>Rp ${total.toLocaleString('id-ID')}</span></div>`;
+    }
+    elGol.addEventListener('change', hitungSimulasi);
+    elPakai.addEventListener('input', hitungSimulasi);
+    hitungSimulasi();
+    </script>
+    {% endif %}
+
+  </main>
+</div>
+
+<footer class="app-footer">
+  &copy; <span id="tahunFooter"></span> SIMAS — Sistem Informasi Pamsimas &middot; dibuat oleh <strong>kipli.net</strong>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>document.getElementById('tahunFooter').textContent = new Date().getFullYear();</script>
+</body>
+</html>

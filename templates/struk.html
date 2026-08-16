@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Struk — {{ p.nomor_meteran }}</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Courier New', Consolas, monospace;
+    width: 80mm;
+    margin: 0 auto;
+    padding: 8px;
+    font-size: 12px;
+    color: #000;
+    background: #fff;
+  }
+  .center { text-align: center; }
+  .bold { font-weight: 700; }
+  .line { border-top: 1px dashed #000; margin: 6px 0; }
+  .row { display: flex; justify-content: space-between; gap: 6px; }
+  .title { font-size: 15px; font-weight: 800; }
+  .small { font-size: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  td { padding: 1px 0; }
+  .total-row { font-size: 14px; font-weight: 800; }
+  .no-print { margin-top: 14px; }
+  .no-print button {
+    width: 100%; padding: 10px; font-size: 14px; font-weight: 700;
+    background: #0e7fae; color: #fff; border: none; border-radius: 8px; margin-bottom: 6px;
+  }
+  .no-print a { display:block; text-align:center; font-size:12px; color:#555; text-decoration:none; }
+  @media print {
+    .no-print { display: none; }
+    body { width: 80mm; padding: 0; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="center">
+    <div class="title">PAMSIMAS</div>
+    <div class="small">Struk Tagihan Air Bersih</div>
+    <div class="small">Periode: {{ periode_label_str }}</div>
+  </div>
+  <div class="line"></div>
+
+  <table>
+    <tr><td>No. Meteran</td><td class="bold" style="text-align:right;">{{ p.nomor_meteran }}</td></tr>
+    <tr><td>Nama</td><td style="text-align:right;">{{ p.nama }}</td></tr>
+    <tr><td>Alamat</td><td style="text-align:right;">RT {{ p.rt }}/RW {{ p.rw }}</td></tr>
+    <tr><td>Golongan</td><td style="text-align:right;">{{ p.golongan_tarif }}</td></tr>
+  </table>
+  <div class="line"></div>
+
+  <table>
+    {% if catat %}
+    <tr><td>Meteran Awal</td><td style="text-align:right;">{{ catat.meteran_awal }}</td></tr>
+    <tr><td>Meteran Akhir</td><td style="text-align:right;">{{ catat.meteran_akhir }}</td></tr>
+    {% else %}
+    <tr><td colspan="2" class="small">Abodemen — bulan ini tidak ada pencatatan meteran</td></tr>
+    {% endif %}
+    <tr><td class="bold">Pemakaian</td><td class="bold" style="text-align:right;">{{ tagihan.pemakaian_m3 }} m³</td></tr>
+  </table>
+  <div class="line"></div>
+
+  <div class="small bold">Rincian Tarif Progresif</div>
+  <table>
+    {% for r in rincian %}
+    <tr>
+      <td>Blok {{ r.blok }} ({{ r.m3 }} m³)</td>
+      <td style="text-align:right;">Rp {{ "{:,.0f}".format(r.subtotal).replace(",",".") }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  <div class="line"></div>
+
+  <table>
+    <tr class="total-row"><td>TOTAL</td><td style="text-align:right;">Rp {{ "{:,.0f}".format(tagihan.total_tagihan).replace(",",".") }}</td></tr>
+  </table>
+  <div class="row small" style="margin-top:4px;">
+    <span>Status</span>
+    <span class="bold">{{ "LUNAS" if tagihan.status_bayar == "lunas" else "BELUM BAYAR" }}</span>
+  </div>
+
+  {% if catat and catat.alasan %}
+  <div class="line"></div>
+  <div class="small">Catatan: {{ catat.alasan }}</div>
+  {% endif %}
+
+  <div class="line"></div>
+  <div class="small center">
+    Dicatat oleh: {{ catat.petugas if catat else "-" }}<br>
+    Dicetak oleh: {{ dicetak_oleh }}<br>
+    {{ waktu_cetak }}
+  </div>
+  <div class="center small" style="margin-top:6px;">Terima kasih atas pembayarannya</div>
+
+  <div class="no-print">
+    <button onclick="window.print()">🖨️ Cetak Struk (80mm)</button>
+    <a href="javascript:window.close()">Tutup halaman ini</a>
+  </div>
+
+  <script>
+    // otomatis buka dialog cetak begitu halaman siap
+    window.addEventListener('load', () => setTimeout(() => window.print(), 300));
+  </script>
+</body>
+</html>

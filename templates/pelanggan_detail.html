@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detail Pelanggan — {{ p.nama }}</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--brand-900:#063a4f; --brand-700:#0b6285; --brand-600:#0e7fae; --brand-100:#e7f4fa; --ink:#1e2b33; --muted:#6b7c86; --line:#e6edf1;}
+*{box-sizing:border-box;}
+body{font-family:'Inter',system-ui,sans-serif; background:#f2f6f8; color:var(--ink); font-size:.925rem;}
+.topbar{background:linear-gradient(120deg,var(--brand-900),var(--brand-700) 60%,var(--brand-600)); color:#fff; padding:16px 28px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 6px 20px rgba(16,42,54,.08);}
+.topbar .brand{display:flex; align-items:center; gap:12px;}
+.topbar .brand .logo{width:42px; height:42px; border-radius:11px; background:rgba(255,255,255,.15); display:flex; align-items:center; justify-content:center; font-size:1.3rem;}
+.topbar .brand h1{font-size:1.05rem; font-weight:800; margin:0;}
+.topbar .brand small{display:block; color:rgba(255,255,255,.75); font-weight:400; font-size:.75rem;}
+.main{padding:20px 22px 60px; max-width:1300px; margin:0 auto;}
+.card-x{background:#fff; border:1px solid var(--line); border-radius:14px;}
+.section-title{font-weight:800; font-size:1.02rem;}
+.info-box{background:var(--brand-100); border:1px solid #cfe9f5; border-radius:10px; padding:14px 16px; font-size:.85rem;}
+.info-box .rowx{display:flex; justify-content:space-between; gap:10px; padding:3px 0;}
+table.tbl{margin-bottom:0; font-size:.83rem;}
+table.tbl thead th{background:#f7fafb; color:var(--muted); font-weight:700; text-transform:uppercase; font-size:.66rem; border-bottom:1px solid var(--line); padding:10px 12px; white-space:nowrap;}
+table.tbl tbody td{padding:9px 12px; vertical-align:middle; border-bottom:1px solid #f0f3f5;}
+.badge-x{padding:4px 9px; border-radius:7px; font-size:.7rem; font-weight:700;}
+.b-normal{background:#e4f7ea;color:#1e8449;}
+.b-abodemen{background:#fde8e8;color:#c0392b;}
+.b-lunas{background:#e4f7ea;color:#1e8449;}
+.b-belum{background:#fff6dc;color:#946c00;}
+.b-nonaktif{background:#eef1f3;color:#5b6b75;}
+.btn-brand{background:var(--brand-600); border-color:var(--brand-600); color:#fff; font-weight:600;}
+.btn-brand:hover{background:var(--brand-700); border-color:var(--brand-700); color:#fff;}
+.btn-outline-brand{border-color:var(--brand-600); color:var(--brand-700); font-weight:600;}
+.app-footer{text-align:center; padding:18px 20px 26px; color:var(--muted); font-size:.8rem; border-top:1px solid var(--line); margin-top:26px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="logo"><i class="bi bi-droplet-half"></i></div>
+    <div>
+      <h1>SIMAS — Detail Pelanggan</h1>
+      <small>Sistem Informasi Pamsimas</small>
+    </div>
+  </div>
+  <a href="{{ url_for('index', tab='pelanggan') }}" class="btn btn-sm btn-outline-light"><i class="bi bi-arrow-left"></i> Kembali ke Data Pelanggan</a>
+</div>
+
+<div class="main">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show py-2 mt-3" role="alert">
+          {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="row g-3">
+    <!-- INFO PELANGGAN -->
+    <div class="col-lg-4">
+      <div class="card-x p-3">
+        <div class="section-title" style="font-size:.95rem;"><i class="bi bi-person-vcard"></i> Informasi Pelanggan</div>
+        <div class="info-box mt-2">
+          <div class="rowx"><span>No. Meteran</span><strong>{{ p.nomor_meteran }}</strong></div>
+          <div class="rowx"><span>Nama</span><strong>{{ p.nama }}</strong></div>
+          <div class="rowx"><span>Alamat</span><strong>{{ p.alamat or '-' }}</strong></div>
+          <div class="rowx"><span>RT / RW</span><strong>{{ p.rt or '-' }} / {{ p.rw or '-' }}</strong></div>
+          <div class="rowx"><span>Golongan Tarif</span><strong>{{ p.golongan_tarif }}</strong></div>
+          <div class="rowx"><span>Meteran Awal</span><strong>{{ p.meteran_awal }}</strong></div>
+          <div class="rowx"><span>Petugas Binaan</span><strong>{{ p.petugas or '-' }}</strong></div>
+          <div class="rowx"><span>No. HP / Kontak</span><strong>{{ p.kontak or '-' }}</strong></div>
+          <div class="rowx"><span>Status</span><strong>{% if p.aktif %}<span class="badge-x b-normal">Aktif</span>{% else %}<span class="badge-x b-nonaktif">Nonaktif</span>{% endif %}</strong></div>
+          <div class="rowx"><span>Terdaftar Sejak</span><strong class="small">{{ p.created_at }}</strong></div>
+        </div>
+        <form method="post" action="{{ url_for('toggle_aktif_pelanggan', pelanggan_id=p.id) }}" class="mt-2"
+              onsubmit="return confirm('{{ 'Nonaktifkan' if p.aktif else 'Aktifkan kembali' }} pelanggan ini?')">
+          <button type="submit" class="btn btn-sm w-100 {{ 'btn-outline-danger' if p.aktif else 'btn-outline-success' }}">
+            {% if p.aktif %}<i class="bi bi-person-x"></i> Nonaktifkan Pelanggan{% else %}<i class="bi bi-person-check"></i> Aktifkan Kembali{% endif %}
+          </button>
+        </form>
+        <div class="small text-muted mt-2">Pelanggan nonaktif tidak muncul di dashboard petugas dan tidak ikut generate tagihan, tetapi riwayatnya tetap tersimpan.</div>
+      </div>
+    </div>
+
+    <!-- FORM UBAH DATA -->
+    <div class="col-lg-8">
+      <div class="card-x p-3">
+        <div class="section-title" style="font-size:.95rem;"><i class="bi bi-pencil-square"></i> Ubah Data Pelanggan</div>
+        <form method="post" action="{{ url_for('ubah_pelanggan', pelanggan_id=p.id) }}" class="mt-2 row g-2">
+          <div class="col-md-6"><label class="form-label small fw-semibold">Nomor Meteran</label><input type="text" name="nomor_meteran" class="form-control form-control-sm" value="{{ p.nomor_meteran }}" required></div>
+          <div class="col-md-6"><label class="form-label small fw-semibold">Nama</label><input type="text" name="nama" class="form-control form-control-sm" value="{{ p.nama }}" required></div>
+          <div class="col-12"><label class="form-label small fw-semibold">Alamat</label><input type="text" name="alamat" class="form-control form-control-sm" value="{{ p.alamat or '' }}"></div>
+          {% set nomor_list = range(1, 21)|map('string')|list %}
+          <div class="col-6 col-md-3">
+            <label class="form-label small fw-semibold">RT</label>
+            <select name="rt" class="form-select form-select-sm">
+              <option value="">— pilih —</option>
+              {% for i in nomor_list %}<option value="{{ i }}" {{ 'selected' if p.rt==i }}>RT {{ i }}</option>{% endfor %}
+              {% if p.rt and p.rt not in nomor_list %}<option value="{{ p.rt }}" selected>RT {{ p.rt }}</option>{% endif %}
+            </select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label small fw-semibold">RW</label>
+            <select name="rw" class="form-select form-select-sm">
+              <option value="">— pilih —</option>
+              {% for i in nomor_list %}<option value="{{ i }}" {{ 'selected' if p.rw==i }}>RW {{ i }}</option>{% endfor %}
+              {% if p.rw and p.rw not in nomor_list %}<option value="{{ p.rw }}" selected>RW {{ p.rw }}</option>{% endif %}
+            </select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label small fw-semibold">Golongan Tarif</label>
+            <select name="golongan_tarif" class="form-select form-select-sm" required>
+              {% for g in golongan_list %}<option value="{{ g }}" {{ 'selected' if p.golongan_tarif==g }}>{{ g }}</option>{% endfor %}
+              {% if p.golongan_tarif not in golongan_list %}<option value="{{ p.golongan_tarif }}" selected>{{ p.golongan_tarif }}</option>{% endif %}
+            </select>
+          </div>
+          <div class="col-6 col-md-3"><label class="form-label small fw-semibold">Meteran Awal</label><input type="number" name="meteran_awal" class="form-control form-control-sm" value="{{ p.meteran_awal }}" required></div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">Petugas Binaan</label>
+            <input type="text" name="petugas" class="form-control form-control-sm" value="{{ p.petugas or '' }}" list="petugasList" placeholder="pilih atau ketik nama">
+            <datalist id="petugasList">{% for pt in petugas_list %}<option value="{{ pt }}">{% endfor %}</datalist>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-semibold">No. HP / Kontak</label>
+            <input type="text" name="kontak" class="form-control form-control-sm" value="{{ p.kontak or '' }}" placeholder="opsional">
+          </div>
+          <div class="col-12 mt-1">
+            <button type="submit" class="btn btn-brand btn-sm px-4"><i class="bi bi-save"></i> Simpan Perubahan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIWAYAT BULANAN -->
+  <div class="section-title mt-4"><i class="bi bi-clock-history"></i> Riwayat Bulanan</div>
+  <div class="card-x mt-1">
+    <div class="table-responsive">
+      <table class="tbl table">
+        <thead><tr>
+          <th>Periode</th><th>Meter Awal</th><th>Meter Akhir</th><th>Pemakaian</th>
+          <th>Jenis</th><th>Tagihan</th><th>Status Bayar</th><th>Petugas</th><th>Anomali</th><th>Alasan</th><th>Foto</th>
+        </tr></thead>
+        <tbody>
+          {% for r in riwayat %}
+          <tr>
+            <td class="text-nowrap fw-semibold">{{ periode_label(r.periode) }}</td>
+            {% if r.catat %}
+            <td>{{ r.catat.meteran_awal }}</td>
+            <td>{{ r.catat.meteran_akhir }}</td>
+            <td>{{ r.catat.meteran_akhir - r.catat.meteran_awal }} m³</td>
+            {% else %}
+            <td>-</td><td>-</td><td>-</td>
+            {% endif %}
+            <td>{% if r.tagihan %}{% if r.tagihan.jenis == 'abodemen' %}<span class="badge-x b-abodemen">Abodemen</span>{% else %}<span class="badge-x b-normal">Normal</span>{% endif %}{% else %}-{% endif %}</td>
+            <td>{% if r.tagihan %}{{ r.tagihan.total_tagihan|rupiah }}{% else %}-{% endif %}</td>
+            <td>{% if r.tagihan %}{% if r.tagihan.status_bayar == 'lunas' %}<span class="badge-x b-lunas">Lunas</span>{% else %}<span class="badge-x b-belum">Belum Bayar</span>{% endif %}{% else %}-{% endif %}</td>
+            <td>{% if r.catat %}{{ r.catat.petugas or '-' }}{% else %}-{% endif %}</td>
+            <td>{% if r.catat and r.catat.anomali %}<span class="badge-x b-abodemen">Ya</span>{% else %}-{% endif %}</td>
+            <td class="small text-muted">{% if r.catat %}{{ r.catat.alasan or '-' }}{% else %}-{% endif %}</td>
+            <td>{% if r.catat and r.catat.foto %}<a href="{{ url_for('uploaded_file', filename=r.catat.foto) }}" target="_blank" class="btn btn-sm btn-outline-brand"><i class="bi bi-image"></i></a>{% else %}-{% endif %}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="11" class="text-center text-muted py-5">Belum ada riwayat pencatatan atau tagihan untuk pelanggan ini.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<footer class="app-footer">
+  &copy; <span id="tahunFooter"></span> SIMAS — Sistem Informasi Pamsimas &middot; dibuat oleh <strong>kipli.net</strong>
+</footer>
+<script>document.getElementById('tahunFooter').textContent = new Date().getFullYear();</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+.aider*
+cater.7z
+__pycache__/
+.claude/
+
+# database runtime (dikelola lewat volume Docker / dibuat otomatis saat aplikasi jalan)
+pamsimas.db
+pamsimas.db-wal
+pamsimas.db-shm

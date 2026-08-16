@@ -1,0 +1,20 @@
+services:
+  simas:
+    build: .
+    container_name: simas
+    restart: unless-stopped
+    environment:
+      - DB_PATH=/data/pamsimas.db
+      - UPLOAD_DIR=/data/uploads
+      - FLASK_DEBUG=0
+    volumes:
+      - simas_data:/data
+    networks:
+      - cloudflared
+
+volumes:
+  simas_data:
+
+networks:
+  cloudflared:
+    external: true

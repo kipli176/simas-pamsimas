@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masuk Petugas — SIMAS Pamsimas</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--brand-900:#063a4f; --brand-700:#0b6285; --brand-600:#0e7fae; --brand-100:#e7f4fa; --ink:#1e2b33; --muted:#6b7c86; --line:#e6edf1;}
+*{box-sizing:border-box;}
+body{font-family:'Inter',system-ui,sans-serif; background:linear-gradient(120deg,var(--brand-900),var(--brand-700) 60%,var(--brand-600)); min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; color:var(--ink);}
+.login-head{color:#fff; text-align:center; margin-bottom:22px;}
+.login-head .logo{width:58px; height:58px; border-radius:16px; background:rgba(255,255,255,.15); display:flex; align-items:center; justify-content:center; font-size:1.8rem; margin:0 auto 10px;}
+.login-head h1{font-size:1.25rem; font-weight:800; margin:0; letter-spacing:.2px;}
+.login-head small{color:rgba(255,255,255,.75); font-size:.78rem;}
+.card-login{background:#fff; border-radius:16px; padding:28px 26px; width:100%; max-width:420px; box-shadow:0 18px 45px rgba(16,42,54,.35);}
+.card-login h5{font-weight:800; color:var(--ink);}
+.pin-hint{background:var(--brand-100); border:1px solid #cfe9f5; border-radius:8px; padding:8px 12px; font-size:.78rem; color:var(--brand-700);}
+.btn-brand{background:var(--brand-600); border-color:var(--brand-600); color:#fff; font-weight:700;}
+.btn-brand:hover{background:var(--brand-700); border-color:var(--brand-700); color:#fff;}
+.app-footer{color:rgba(255,255,255,.75); text-align:center; font-size:.78rem; margin-top:22px;}
+.app-footer strong{color:#fff;}
+</style>
+</head>
+<body>
+
+  <div class="login-head">
+    <div class="logo"><i class="bi bi-droplet-half"></i></div>
+    <h1>SIMAS</h1>
+    <small>Sistem Informasi Pamsimas</small>
+  </div>
+
+  <div class="card-login">
+    <h5 class="text-center mb-1">Masuk sebagai Petugas</h5>
+    <p class="text-center text-muted small mb-3">Pilih nama Anda, lalu masukkan PIN untuk membuka dashboard pencatatan lapangan.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, msg in messages %}
+          <div class="alert alert-{{ category }} py-2 small">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% if not daftar_petugas %}
+    <div class="alert alert-warning py-2 small">Belum ada petugas terdaftar. Hubungi admin agar nama petugas ditambahkan pada data pelanggan.</div>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('petugas_masuk') }}">
+      <div class="mb-3">
+        <label class="form-label small fw-semibold">Nama Petugas</label>
+        <select name="petugas_pilih" class="form-select" required>
+          <option value="">— pilih nama —</option>
+          {% for p in daftar_petugas %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label small fw-semibold">PIN</label>
+        <input type="password" name="pin" class="form-control" inputmode="numeric" maxlength="6" placeholder="masukkan PIN" required>
+      </div>
+      <div class="pin-hint mb-3"><i class="bi bi-info-circle"></i> PIN sama untuk semua petugas: <strong>123456</strong></div>
+      {% if turnstile_site_key %}
+      <div class="cf-turnstile mb-3 d-flex justify-content-center" data-sitekey="{{ turnstile_site_key }}"></div>
+      {% endif %}
+      <button type="submit" class="btn btn-brand w-100 py-2">Masuk Dashboard <i class="bi bi-arrow-right"></i></button>
+    </form>
+  </div>
+
+  <footer class="app-footer">
+    &copy; <span id="tahunFooter"></span> SIMAS — Sistem Informasi Pamsimas &middot; dibuat oleh <strong>kipli.net</strong>
+  </footer>
+  <script>document.getElementById('tahunFooter').textContent = new Date().getFullYear();</script>
+  {% if turnstile_site_key %}
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  {% endif %}
+</body>
+</html>

@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Petugas — {{ nama_petugas }}</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{ --brand-900:#063a4f; --brand-700:#0b6285; --brand-600:#0e7fae; --brand-100:#e7f4fa; --line:#e6edf1; --muted:#6b7c86; --ink:#1e2b33; }
+*{box-sizing:border-box;}
+body{font-family:'Inter',system-ui,sans-serif; background:#f2f6f8; color:var(--ink); font-size:.9rem;}
+.topbar{background:linear-gradient(120deg,var(--brand-900),var(--brand-700) 60%,var(--brand-600)); color:#fff; padding:14px 22px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;}
+.topbar .who{display:flex; align-items:center; gap:10px;}
+.topbar .avatar{width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.18); display:flex; align-items:center; justify-content:center; font-weight:800;}
+.main{padding:20px 22px 60px; max-width:1300px; margin:0 auto;}
+.stat{background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px; height:100%;}
+.stat .ic{width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.05rem;}
+.stat .label{font-size:.68rem; color:var(--muted); font-weight:700; text-transform:uppercase;}
+.stat .value{font-size:1.15rem; font-weight:800;}
+.card-x{background:#fff; border:1px solid var(--line); border-radius:14px;}
+.filterbar{background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin:16px 0;}
+.filterbar label{font-size:.68rem; font-weight:700; color:var(--muted); text-transform:uppercase;}
+table.tbl{margin-bottom:0; font-size:.83rem;}
+table.tbl thead th{background:#f7fafb; color:var(--muted); font-weight:700; text-transform:uppercase; font-size:.66rem; border-bottom:1px solid var(--line); padding:10px 12px; white-space:nowrap; position:sticky; top:0; z-index:2;}
+.scroll-binaan{max-height:68vh; overflow-y:auto;}
+table.tbl tbody td{padding:9px 12px; vertical-align:middle; border-bottom:1px solid #f0f3f5;}
+.badge-x{padding:4px 9px; border-radius:7px; font-size:.7rem; font-weight:700;}
+.b-normal{background:#e4f7ea;color:#1e8449;} .b-abodemen{background:#fde8e8;color:#c0392b;}
+.btn-brand{background:var(--brand-600); border-color:var(--brand-600); color:#fff; font-weight:600;}
+.btn-brand:hover{background:var(--brand-700); border-color:var(--brand-700); color:#fff;}
+.btn-outline-brand{border-color:var(--brand-600); color:var(--brand-700); font-weight:600;}
+.section-title{font-weight:800; font-size:1.02rem;}
+.step-box{background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px; position:sticky; top:14px;}
+.step-num{width:26px; height:26px; border-radius:50%; background:var(--brand-600); color:#fff; font-size:.75rem; font-weight:700; display:inline-flex; align-items:center; justify-content:center; margin-right:8px;}
+.wizard-row .form-label{min-height:26px; display:flex; align-items:center;}
+.section-desc{color:var(--muted); font-size:.82rem; margin-bottom:16px;}
+.info-pelanggan{background:var(--brand-100); border:1px solid #cfe9f5; border-radius:10px; padding:12px 14px; font-size:.83rem;}
+.dropzone{border:2px dashed #cfd8dc; border-radius:12px; padding:16px; text-align:center; cursor:pointer; background:#fafcfd;}
+.dropzone img{max-height:110px; border-radius:8px; margin-top:8px;}
+.pager{display:flex; gap:6px; padding:12px 14px;}
+.pager a, .pager span{padding:5px 11px; border-radius:8px; font-size:.78rem; font-weight:600; text-decoration:none; color:var(--brand-700); border:1px solid var(--line);}
+.pager .current{background:var(--brand-600); color:#fff; border-color:var(--brand-600);}
+.pager .disabled{color:#c3ccd1; pointer-events:none;}
+.offline-dot{width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:5px;}
+.app-footer{text-align:center; padding:18px 20px 26px; color:var(--muted); font-size:.8rem; border-top:1px solid var(--line); margin-top:26px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="who">
+    <div class="avatar">{{ nama_petugas[0]|upper }}</div>
+    <div>
+      <div class="fw-bold">{{ nama_petugas }}</div>
+      <div class="small" style="opacity:.8;">Petugas Lapangan · Periode {{ periode_now_label }}</div>
+    </div>
+  </div>
+  <div class="d-flex align-items-center gap-3">
+    <span id="statusKoneksi" class="small fw-semibold"><span class="offline-dot" style="background:#4ade80;"></span>Online</span>
+    <a href="{{ url_for('petugas_keluar') }}" class="btn btn-sm btn-outline-light">Keluar</a>
+  </div>
+</div>
+
+<div class="main">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show py-2 mt-3" role="alert">
+          {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- RINGKASAN -->
+  <div class="row g-3 my-1">
+    <div class="col-6 col-md-3">
+      <div class="stat"><div class="ic" style="background:#eaf3fb;color:#1d5ea8;"><i class="bi bi-people-fill"></i></div>
+        <div><div class="label">Pelanggan Binaan</div><div class="value">{{ total_binaan }}</div></div></div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat"><div class="ic" style="background:#e4f7ea;color:#1e8449;"><i class="bi bi-check2-circle"></i></div>
+        <div><div class="label">Sudah Dicatat</div><div class="value">{{ sdh_catat }} <span class="small text-muted">/ {{ total_binaan }}</span></div></div></div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat"><div class="ic" style="background:#fde8e8;color:#c0392b;"><i class="bi bi-hourglass-split"></i></div>
+        <div><div class="label">Belum Dicatat</div><div class="value">{{ belum_catat }}</div></div></div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat"><div class="ic" style="background:#fff6dc;color:#946c00;"><i class="bi bi-cash-coin"></i></div>
+        <div><div class="label">Total Tagihan Dihasilkan</div><div class="value" style="font-size:1rem;">Rp {{ "{:,.0f}".format(total_nominal).replace(",",".") }}</div></div></div>
+    </div>
+  </div>
+
+  <!-- ARSIP OFFLINE (tersimpan di IndexedDB) -->
+  <div class="card-x p-3 mt-3" id="panelArsip" style="display:none;">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div class="section-title"><i class="bi bi-cloud-slash"></i> Arsip Offline Belum Terkirim (<span id="jumlahArsip">0</span>)</div>
+      <button class="btn btn-sm btn-brand" id="btnKirimBatch" onclick="kirimBatch()"><i class="bi bi-send"></i> Kirim Semua</button>
+    </div>
+    <div class="table-responsive">
+      <table class="tbl table mb-0">
+        <thead><tr><th>Pelanggan</th><th>Meteran Akhir</th><th>Alasan</th><th>Foto</th><th>Disimpan</th><th>Status</th><th></th></tr></thead>
+        <tbody id="tbodyArsip"></tbody>
+      </table>
+    </div>
+    <div class="small text-muted mt-2">Data arsip beserta foto tersimpan aman di perangkat ini. Setelah terkirim, data otomatis dihapus dari perangkat.</div>
+  </div>
+
+  <div class="row g-3 mt-1">
+    <!-- FORM PENCATATAN (wizard RW -> RT -> Nama, sama seperti form admin) -->
+    <div class="col-lg-5">
+      <div class="section-title mt-2">Input Pencatatan Meteran</div>
+      <div class="section-desc">Periode {{ periode_now_label }}. Pilih pelanggan lewat RW → RT → Nama, atau cari langsung.</div>
+
+      <div class="step-box mt-1">
+        <div class="mb-3">
+          <span class="step-num">1</span><strong>Cari cepat (opsional)</strong>
+          <input type="text" id="cariCepat" class="form-control form-control-sm mt-2" placeholder="Ketik nama atau nomor meteran...">
+        </div>
+
+        <div class="row g-2 mb-3 wizard-row">
+          <div class="col-4">
+            <label class="form-label small fw-semibold"><span class="step-num">2</span>RW</label>
+            <select id="selRW" class="form-select form-select-sm">
+              <option value="">Pilih RW</option>
+            </select>
+          </div>
+          <div class="col-4">
+            <label class="form-label small fw-semibold">RT</label>
+            <select id="selRT" class="form-select form-select-sm" disabled>
+              <option value="">Pilih RT</option>
+            </select>
+          </div>
+          <div class="col-4">
+            <label class="form-label small fw-semibold">Nama</label>
+            <select id="selNama" class="form-select form-select-sm" required disabled>
+              <option value="">Pilih Nama</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="infoPelanggan" class="info-pelanggan mb-3" style="display:none;"></div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold"><span class="step-num">3</span>Meteran Akhir (hasil baca bulan ini)</label>
+          <input type="number" id="inputAkhir" class="form-control" placeholder="masukkan hasil baca meteran">
+          <div class="form-text" id="hintPakai"></div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Foto Bukti Meteran <span class="text-danger">(wajib)</span></label>
+          <div class="dropzone" onclick="document.getElementById('fileFoto').click()">
+            <i class="bi bi-camera text-secondary"></i>
+            <div class="small text-muted">Klik untuk pilih foto wajib (JPG/PNG/WEBP, maks 5MB)</div>
+            <img id="previewFoto" style="display:none;">
+          </div>
+          <input type="file" id="fileFoto" accept="image/jpeg,image/png,image/webp" style="display:none;">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label small fw-semibold">Alasan / Catatan (wajib jika ada kejanggalan)</label>
+          <input type="text" id="inputAlasan" class="form-control form-control-sm" placeholder="contoh: kebocoran pipa, meteran diganti, dll">
+        </div>
+
+        <div class="form-check mb-3" id="boxKonfirmasi" style="display:none;">
+          <input class="form-check-input" type="checkbox" id="ckKonfirmasi">
+          <label class="form-check-label small" for="ckKonfirmasi">
+            Saya sudah memeriksa ulang dan yakin angka meteran ini benar meskipun tidak biasa.
+          </label>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-brand flex-fill" id="btnKirimForm" onclick="kirimLangsung()"><i class="bi bi-send"></i> Kirim</button>
+          <button type="button" class="btn btn-outline-secondary flex-fill" onclick="arsipkanOffline()"><i class="bi bi-archive"></i> Arsipkan</button>
+        </div>
+        <div class="small text-muted mt-2">
+          <strong>Kirim</strong>: langsung tersimpan (butuh koneksi internet).<br>
+          <strong>Arsipkan</strong>: data + foto tersimpan di perangkat ini, kirim belakangan saat sinyal ada.
+        </div>
+      </div>
+
+      <div class="card-x p-3 mt-3">
+        <div class="section-title" style="font-size:.95rem;"><i class="bi bi-shield-check"></i> Pencegahan Anomali</div>
+        <ul class="small text-muted mb-0 ps-3">
+          <li class="mb-2">Meteran akhir tidak boleh lebih kecil dari meteran awal — sistem menolak otomatis.</li>
+          <li class="mb-2">Jika pemakaian bulan ini <strong>&gt; 3x</strong> atau <strong>&lt; 0.2x</strong> rata-rata 6 bulan terakhir pelanggan tersebut, sistem menampilkan peringatan dan meminta konfirmasi + alasan sebelum data disimpan.</li>
+          <li class="mb-2">Foto meteran disimpan sebagai bukti fisik, membantu verifikasi bila ada sengketa tagihan.</li>
+          <li>Nomor meteran & periode bersifat unik — pencatatan ganda pada bulan yang sama akan menimpa data lama, bukan dobel.</li>
+        </ul>
+      </div>
+    </div>
+    <!-- TABEL PELANGGAN BINAAN -->
+    <div class="col-lg-7">
+      <div class="section-title mt-2">Pelanggan Binaan Saya</div>
+      <div class="text-muted small mb-1">Klik "Catat" untuk isi form di samping, atau "Struk" jika sudah tercatat bulan ini.</div>
+
+      <form method="get" class="filterbar row g-2 align-items-end">
+        <div class="col-4 col-md-3">
+          <label>RW</label>
+          <select name="rw" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">Semua</option>
+            {% for r in rw_list %}<option value="{{ r }}" {{ 'selected' if rw==r }}>RW {{ r }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-4 col-md-3">
+          <label>RT</label>
+          <select name="rt" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">Semua</option>
+            {% for r in rt_list %}<option value="{{ r }}" {{ 'selected' if rt==r }}>RT {{ r }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-4 col-md-3">
+          <label>Status</label>
+          <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">Semua</option>
+            <option value="tercatat" {{ 'selected' if status=='tercatat' }}>Sudah</option>
+            <option value="belum" {{ 'selected' if status=='belum' }}>Belum</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-3">
+          <label>Cari</label>
+          <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="nama / nomor">
+        </div>
+        <div class="col-12 d-flex gap-2 mt-1">
+          <button class="btn btn-sm btn-brand px-3">Terapkan</button>
+          <a href="{{ url_for('petugas_dashboard') }}" class="btn btn-sm btn-outline-secondary px-3">Reset</a>
+        </div>
+      </form>
+
+      <div class="card-x">
+        <div class="table-responsive scroll-binaan">
+          <table class="tbl table mb-0">
+            <thead><tr><th>No. Meteran</th><th>Nama</th><th>RT/RW</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              {% for p in daftar %}
+              <tr>
+                <td class="text-nowrap">{{ p.nomor_meteran }}</td>
+                <td>{{ p.nama }}</td>
+                <td>{{ p.rt }}/{{ p.rw }}</td>
+                <td>
+                  {% if p.id in tercatat_map %}<span class="badge-x b-normal">Tercatat</span>
+                  {% else %}<span class="badge-x b-abodemen">Belum</span>{% endif %}
+                </td>
+                <td>
+                  {% if p.id in tercatat_map %}
+                  <a href="{{ url_for('petugas_struk', pelanggan_id=p.id) }}" target="_blank" class="btn btn-sm btn-outline-brand"><i class="bi bi-printer"></i> Struk</a>
+                  {% else %}
+                  <button type="button" class="btn btn-sm btn-brand" onclick="pilihPelanggan({{ p.id }})"><i class="bi bi-pencil-square"></i> Catat</button>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" class="text-center text-muted py-4">Tidak ada pelanggan pada filter ini.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if total_pages > 1 %}
+        <div class="pager">
+          <a class="{{ 'disabled' if page<=1 }}" href="?rw={{ rw }}&rt={{ rt }}&status={{ status }}&q={{ q }}&page={{ page-1 }}">&laquo;</a>
+          <span class="current">{{ page }} / {{ total_pages }}</span>
+          <a class="{{ 'disabled' if page>=total_pages }}" href="?rw={{ rw }}&rt={{ rt }}&status={{ status }}&q={{ q }}&page={{ page+1 }}">&raquo;</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const NAMA_PETUGAS = {{ nama_petugas|tojson }};
+const DATA_BINAAN = {{ pelanggan_json|safe }};
+
+const selRW = document.getElementById('selRW');
+const selRT = document.getElementById('selRT');
+const selNama = document.getElementById('selNama');
+const cariCepat = document.getElementById('cariCepat');
+const infoBox = document.getElementById('infoPelanggan');
+const inputAkhir = document.getElementById('inputAkhir');
+const hintPakai = document.getElementById('hintPakai');
+const boxKonfirmasi = document.getElementById('boxKonfirmasi');
+
+// wizard RW -> RT -> Nama (sama seperti form pencatatan di halaman admin)
+[...new Set(DATA_BINAAN.map(p => p.rw))].sort().forEach(rw => {
+  selRW.insertAdjacentHTML('beforeend', `<option value="${rw}">RW ${rw}</option>`);
+});
+
+function isiRT(rw) {
+  selRT.innerHTML = '<option value="">Pilih RT</option>';
+  selNama.innerHTML = '<option value="">Pilih Nama</option>';
+  selNama.disabled = true;
+  if (!rw) { selRT.disabled = true; return; }
+  const rts = [...new Set(DATA_BINAAN.filter(p => p.rw === rw).map(p => p.rt))].sort();
+  rts.forEach(rt => selRT.insertAdjacentHTML('beforeend', `<option value="${rt}">RT ${rt}</option>`));
+  selRT.disabled = false;
+}
+
+function isiNama(rw, rt) {
+  selNama.innerHTML = '<option value="">Pilih Nama</option>';
+  if (!rw || !rt) { selNama.disabled = true; return; }
+  // hanya pelanggan yang belum tercatat periode ini yang ditampilkan
+  const list = DATA_BINAAN.filter(p => p.rw === rw && p.rt === rt && !p.sudah_periode_ini);
+  list.forEach(p => {
+    selNama.insertAdjacentHTML('beforeend', `<option value="${p.id}">${p.nomor_meteran} — ${p.nama}</option>`);
+  });
+  selNama.disabled = false;
+}
+
+selRW.addEventListener('change', () => isiRT(selRW.value));
+selRT.addEventListener('change', () => isiNama(selRW.value, selRT.value));
+selNama.addEventListener('change', () => tampilkanInfo(selNama.value));
+
+function pilihPelanggan(id) {
+  const p = DATA_BINAAN.find(x => String(x.id) === String(id));
+  if (!p) return;
+  selRW.value = p.rw; isiRT(p.rw);
+  selRT.value = p.rt; isiNama(p.rw, p.rt);
+  selNama.value = p.id; tampilkanInfo(p.id);
+  document.getElementById('inputAkhir').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function tampilkanInfo(id) {
+  const p = DATA_BINAAN.find(x => String(x.id) === String(id));
+  if (!p) { infoBox.style.display='none'; return; }
+  const awal = p.last_akhir ?? p.meteran_awal;
+  const rata2 = p.rata2_pakai != null ? `${Number(p.rata2_pakai).toFixed(1)} m³/bulan` : '-';
+  const alamat = [p.alamat, `RT ${p.rt}/RW ${p.rw}`].filter(Boolean).join(' · ');
+  infoBox.innerHTML = `
+    <div class="fw-bold mb-1">${esc(p.nomor_meteran)} — ${esc(p.nama)}</div>
+    <div class="d-flex justify-content-between"><span>Alamat</span><strong class="text-end">${esc(alamat) || '-'}</strong></div>
+    <div class="d-flex justify-content-between"><span>Golongan Tarif</span><strong>${esc(p.golongan_tarif)}</strong></div>
+    <div class="d-flex justify-content-between"><span>Meteran Awal Periode Ini</span><strong>${awal}</strong></div>
+    <div class="d-flex justify-content-between"><span>Rata-rata Pemakaian (6 bln)</span><strong>${rata2}</strong></div>`;
+  infoBox.style.display = 'block';
+  inputAkhir.min = awal;
+  inputAkhir.dataset.awal = awal;
+  boxKonfirmasi.style.display = 'none';
+  document.getElementById('ckKonfirmasi').checked = false;
+  hintKalkulasi();
+}
+
+inputAkhir.addEventListener('input', hintKalkulasi);
+function hintKalkulasi(){
+  const awal = parseFloat(inputAkhir.dataset.awal||0), akhir = parseFloat(inputAkhir.value||0);
+  if (!inputAkhir.value) { hintPakai.textContent=''; return; }
+  const pakai = akhir-awal;
+  hintPakai.innerHTML = pakai<0 ? '<span class="text-danger fw-semibold">⚠ Meteran akhir lebih kecil dari awal</span>' : `Pemakaian: <strong>${pakai} m³</strong>`;
+}
+
+cariCepat.addEventListener('input', () => {
+  const q = cariCepat.value.trim().toLowerCase();
+  if (q.length < 2) return;
+  const found = DATA_BINAAN.find(p => !p.sudah_periode_ini && (p.nama.toLowerCase().includes(q) || p.nomor_meteran.toLowerCase().includes(q)));
+  if (found) pilihPelanggan(found.id);
+});
+
+document.getElementById('fileFoto').addEventListener('change', function(){
+  const f = this.files[0], prev = document.getElementById('previewFoto');
+  if (f) { prev.src = URL.createObjectURL(f); prev.style.display='block'; }
+});
+
+function ambilDataForm(){
+  return {
+    pelanggan_id: selNama.value,
+    meteran_akhir: inputAkhir.value,
+    alasan: document.getElementById('inputAlasan').value,
+    petugas: NAMA_PETUGAS,
+    konfirmasi_anomali: document.getElementById('ckKonfirmasi').checked,
+  };
+}
+
+function kirimLangsung(){
+  const d = ambilDataForm();
+  if (!d.pelanggan_id) { alert('Pilih pelanggan terlebih dahulu (RW → RT → Nama).'); return; }
+  if (!d.meteran_akhir) { alert('Isi meteran akhir.'); return; }
+
+  const foto = document.getElementById('fileFoto').files[0];
+  if (!foto) { alert('Foto bukti meteran wajib diunggah.'); return; }
+  if (foto.size > 5*1024*1024) { alert('Ukuran foto maksimal 5MB.'); return; }
+  const fd = new FormData();
+  Object.entries(d).forEach(([k, v]) => { if (k !== 'konfirmasi_anomali') fd.append(k, v); });
+  fd.set('konfirmasi_anomali', d.konfirmasi_anomali ? '1' : '0');
+  if (foto) fd.append('foto_file', foto);
+
+  fetch("{{ url_for('api_pencatatan') }}", { method:'POST', body: fd })
+    .then(r => r.json())
+    .then(res => {
+      if (res.ok) {
+        alert('Tersimpan: ' + res.pesan);
+        window.location.reload();
+      } else if (res.perlu_konfirmasi) {
+        boxKonfirmasi.style.display = 'block';
+        alert(res.pesan + '\n\nCentang pernyataan di bawah (dan isi alasan bila diminta), lalu klik Kirim ulang.');
+      } else {
+        alert('Gagal: ' + res.pesan);
+      }
+    })
+    .catch(() => alert('Gagal mengirim — periksa koneksi, atau gunakan tombol Arsipkan.'));
+}
+
+/* ---------- IndexedDB untuk arsip offline ---------- */
+const DB_NAME = 'pamsimas_arsip_db';
+const DB_STORE = 'arsip';
+
+function bukaDB(){
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) {
+        db.createObjectStore(DB_STORE, { keyPath: 'temp_id' });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function muatArsip(){
+  const db = await bukaDB();
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(DB_STORE, 'readonly').objectStore(DB_STORE).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function simpanArsip(item){
+  const db = await bukaDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).put(item);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function hapusArsip(tempId){
+  const db = await bukaDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DB_STORE, 'readwrite');
+    tx.objectStore(DB_STORE).delete(tempId);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function buatFormArsip(item){
+  const fd = new FormData();
+  fd.append('pelanggan_id', item.pelanggan_id);
+  fd.append('meteran_akhir', item.meteran_akhir);
+  fd.append('alasan', item.alasan || '');
+  fd.append('petugas', item.petugas || '');
+  fd.append('dari_arsip', '1');
+  fd.append('konfirmasi_anomali', item.konfirmasi_anomali ? '1' : '0');
+  if (item.foto_blob) fd.append('foto_file', item.foto_blob);  // foto ikut dikirim saat sinkronisasi
+  return fd;
+}
+
+function esc(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function arsipkanOffline(){
+  const d = ambilDataForm();
+  if (!d.pelanggan_id) { alert('Pilih pelanggan terlebih dahulu.'); return; }
+  if (!d.meteran_akhir) { alert('Isi meteran akhir.'); return; }
+  const foto = document.getElementById('fileFoto').files[0];
+  if (!foto) { alert('Foto bukti meteran wajib diunggah, termasuk untuk arsip offline.'); return; }
+  if (foto.size > 5*1024*1024) { alert('Ukuran foto maksimal 5MB.'); return; }
+  d.temp_id = 'tmp_' + Date.now();
+  d.dari_arsip = true;
+  d.waktu_simpan = new Date().toLocaleString('id-ID');
+  d.foto_blob = foto;  // IndexedDB menyimpan Blob/File, dikirim bersama data saat sinkronisasi
+  const p = DATA_BINAAN.find(x => String(x.id)===String(d.pelanggan_id));
+  d.nama_tampil = p ? `${p.nomor_meteran} — ${p.nama}` : d.pelanggan_id;
+  await simpanArsip(d);
+  alert('Data dan foto tersimpan di perangkat ini. Kirim nanti lewat panel "Arsip Offline" saat sinyal sudah ada.');
+  document.getElementById('inputAkhir').value = '';
+  document.getElementById('inputAlasan').value = '';
+  document.getElementById('ckKonfirmasi').checked = false;
+  boxKonfirmasi.style.display = 'none';
+  document.getElementById('fileFoto').value = '';
+  document.getElementById('previewFoto').style.display = 'none';
+  renderArsip();
+}
+
+function setStatusArsip(tempId, html){
+  const cell = document.getElementById('status_' + tempId);
+  if (cell) cell.innerHTML = html;
+}
+
+async function renderArsip(){
+  const arr = await muatArsip();
+  const panel = document.getElementById('panelArsip');
+  const tbody = document.getElementById('tbodyArsip');
+  document.getElementById('jumlahArsip').textContent = arr.length;
+  panel.style.display = arr.length ? 'block' : 'none';
+  tbody.innerHTML = arr.map(item => `
+    <tr id="row_${item.temp_id}">
+      <td><strong>${esc(item.nama_tampil)}</strong></td>
+      <td>${esc(item.meteran_akhir)}</td>
+      <td class="small text-muted">${esc(item.alasan) || '-'}</td>
+      <td>${item.foto_blob ? '<i class="bi bi-check-circle-fill text-success" title="Foto tersimpan"></i>' : '<span class="text-danger small">tanpa foto</span>'}</td>
+      <td class="small text-muted text-nowrap">${esc(item.waktu_simpan)}</td>
+      <td id="status_${item.temp_id}"><span class="badge-x b-abodemen">Belum</span></td>
+      <td class="text-nowrap">
+        <button class="btn btn-sm btn-brand" id="btnKirim_${item.temp_id}" onclick="kirimArsip('${item.temp_id}')"><i class="bi bi-send"></i> Kirim</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="hapusItemArsip('${item.temp_id}')" title="Hapus dari perangkat"><i class="bi bi-trash"></i></button>
+      </td>
+    </tr>
+  `).join('');
+  perbaruiTombolKirim();
+}
+
+async function hapusItemArsip(tempId){
+  if (!confirm('Hapus data arsip ini dari perangkat?')) return;
+  await hapusArsip(tempId);
+  renderArsip();
+}
+
+async function kirimArsip(tempId){
+  const arr = await muatArsip();
+  const item = arr.find(x => x.temp_id === tempId);
+  if (!item) return;
+  if (!item.foto_blob) {
+    alert('Data arsip ini tidak memiliki foto. Hapus lewat tombol tempat sampah, lalu arsipkan ulang dengan foto.');
+    return;
+  }
+  const btn = document.getElementById('btnKirim_' + tempId);
+  if (btn) btn.disabled = true;
+  setStatusArsip(tempId, '<span class="text-muted">Mengirim…</span>');
+  try {
+    const res = await fetch("{{ url_for('api_pencatatan') }}", { method:'POST', body: buatFormArsip(item) }).then(r => r.json());
+    if (res.ok) {
+      await hapusArsip(tempId);  // terkirim -> hapus dari IndexedDB
+      alert('Terkirim: ' + res.pesan);
+      await renderArsip();
+      location.reload();
+    } else if (res.perlu_konfirmasi) {
+      if (confirm(res.pesan + '\n\nKlik OK untuk kirim ulang setelah diperiksa (isi alasan bila diminta).')) {
+        item.konfirmasi_anomali = true;
+        if (!item.alasan) item.alasan = prompt('Alasan wajib diisi untuk data tidak biasa:') || '';
+        await simpanArsip(item);
+        kirimArsip(tempId);
+      } else {
+        setStatusArsip(tempId, '<span class="badge-x b-abodemen">Perlu cek ulang</span>');
+        if (btn) btn.disabled = false;
+      }
+    } else {
+      setStatusArsip(tempId, '<span class="text-danger fw-semibold">Gagal</span>');
+      if (btn) btn.disabled = false;
+      alert('Gagal: ' + res.pesan);
+    }
+  } catch(e) {
+    setStatusArsip(tempId, '<span class="text-muted">Offline</span>');
+    if (btn) btn.disabled = false;
+    alert('Masih belum ada koneksi internet.');
+  }
+}
+
+async function kirimBatch(){
+  const arr = await muatArsip();
+  if (!arr.length) return;
+  if (!confirm(`Kirim ${arr.length} data arsip sekarang?`)) return;
+  const btn = document.getElementById('btnKirimBatch');
+  btn.disabled = true;
+  let sukses = 0, gagal = 0, perluKonfirmasi = 0;
+  for (const item of [...arr]) {
+    if (!item.foto_blob) {  // arsip lama tanpa foto: lewati
+      gagal++;
+      setStatusArsip(item.temp_id, '<span class="text-danger fw-semibold">Tanpa foto</span>');
+      continue;
+    }
+    setStatusArsip(item.temp_id, '<span class="text-muted">Mengirim…</span>');
+    try {
+      const res = await fetch("{{ url_for('api_pencatatan') }}", { method:'POST', body: buatFormArsip(item) }).then(r => r.json());
+      if (res.ok) {
+        await hapusArsip(item.temp_id);  // terkirim -> hapus dari IndexedDB
+        sukses++;
+      } else if (res.perlu_konfirmasi) {
+        perluKonfirmasi++;
+        setStatusArsip(item.temp_id, '<span class="badge-x b-abodemen">Perlu cek ulang</span>');
+      } else {
+        gagal++;
+        setStatusArsip(item.temp_id, '<span class="text-danger fw-semibold">Gagal</span>');
+      }
+    } catch(e) {
+      gagal++;
+      setStatusArsip(item.temp_id, '<span class="text-muted">Offline</span>');
+    }
+  }
+  btn.disabled = false;
+  await renderArsip();
+  let pesan = `Pengiriman selesai — terkirim: ${sukses}, gagal: ${gagal}.`;
+  if (perluKonfirmasi) pesan += `\n${perluKonfirmasi} data pemakaiannya tidak biasa: kirim satu per satu lewat tombol Kirim.`;
+  alert(pesan);
+  if (sukses > 0) location.reload();
+}
+
+const btnKirimForm = document.getElementById('btnKirimForm');
+
+// saat offline, semua tombol kirim dinonaktifkan (Arsipkan tetap aktif)
+function perbaruiTombolKirim(){
+  const online = navigator.onLine;
+  btnKirimForm.disabled = !online;
+  const btnBatch = document.getElementById('btnKirimBatch');
+  if (btnBatch) btnBatch.disabled = !online;
+  document.querySelectorAll('[id^="btnKirim_"]').forEach(b => b.disabled = !online);
+}
+
+function cekKoneksi(){
+  const el = document.getElementById('statusKoneksi');
+  if (navigator.onLine) {
+    el.innerHTML = '<span class="offline-dot" style="background:#4ade80;"></span>Online';
+  } else {
+    el.innerHTML = '<span class="offline-dot" style="background:#f87171;"></span>Offline';
+  }
+  perbaruiTombolKirim();
+}
+window.addEventListener('online', cekKoneksi);
+window.addEventListener('offline', cekKoneksi);
+cekKoneksi();
+renderArsip();
+
+{% if prefill %}
+  pilihPelanggan("{{ prefill }}");
+  boxKonfirmasi.style.display = 'block';
+{% endif %}
+</script>
+
+<footer class="app-footer">
+  &copy; <span id="tahunFooter"></span> SIMAS — Sistem Informasi Pamsimas &middot; dibuat oleh <strong>kipli.net</strong>
+</footer>
+<script>document.getElementById('tahunFooter').textContent = new Date().getFullYear();</script>
+</body>
+</html>
