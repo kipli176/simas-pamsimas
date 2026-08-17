@@ -12,6 +12,9 @@ services:
       - ADMIN_PASS=${ADMIN_PASS:-12345678}
       - PIN_PETUGAS=${PIN_PETUGAS:-123456}
       - SECRET_KEY=${SECRET_KEY:-pamsimas-secret-key-ubah-ini}
+      # Cloudflare Turnstile (ganti dengan key asli dari dashboard Cloudflare):
+      - TURNSTILE_SITE_KEY=${TURNSTILE_SITE_KEY:-1x00000000000000000000AA}
+      - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY:-1x0000000000000000000000000000000AA}
     volumes:
       - simas_data:/data
     networks:

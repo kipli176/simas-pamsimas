@@ -56,11 +56,12 @@ ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
 ADMIN_PASS = os.environ.get("ADMIN_PASS", "12345678")
 
 # Cloudflare Turnstile untuk halaman login petugas.
-# Di bawah ini masih dummy key resmi Cloudflare (selalu lolos) untuk tahap uji coba.
-# Ganti dengan Site Key & Secret Key asli dari dashboard Cloudflare untuk produksi.
+# Default di bawah ini dummy key resmi Cloudflare (selalu lolos) untuk tahap uji coba.
+# Untuk produksi, ganti lewat environment variable (lihat README) atau ubah
+# langsung di sini dengan Site Key & Secret Key asli dari dashboard Cloudflare.
 # Kosongkan TURNSTILE_SITE_KEY untuk menonaktifkan captcha.
-TURNSTILE_SITE_KEY = "1x00000000000000000000AA"
-TURNSTILE_SECRET_KEY = "1x0000000000000000000000000000000AA"
+TURNSTILE_SITE_KEY = os.environ.get("TURNSTILE_SITE_KEY", "1x00000000000000000000AA")
+TURNSTILE_SECRET_KEY = os.environ.get("TURNSTILE_SECRET_KEY", "1x0000000000000000000000000000000AA")
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 

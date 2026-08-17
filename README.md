@@ -87,7 +87,22 @@ Volume baru yang kosong otomatis di-seed data dummy saat start pertama. Arahkan 
 | Admin (Basic Auth) | `admin` / `12345678` | `ADMIN_USER`, `ADMIN_PASS` |
 | PIN petugas | `123456` | `PIN_PETUGAS` |
 | Session secret | `pamsimas-secret-key-ubah-ini` | `SECRET_KEY` |
-| Turnstile | dummy key Cloudflare (selalu lolos) | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` di `app.py` |
+| Turnstile | dummy key Cloudflare (selalu lolos) | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` |
+
+### Cloudflare Turnstile (CAPTCHA login petugas)
+
+1. Buka [dashboard Cloudflare](https://dash.cloudflare.com/) → **Turnstile** → **Add Widget** → pilih mode *Managed* → domain aplikasi Anda → dapatkan **Site Key** dan **Secret Key**.
+2. Masukkan key-nya:
+   - **Lokal**: ubah konstanta `TURNSTILE_SITE_KEY` dan `TURNSTILE_SECRET_KEY` di `app.py`.
+   - **Docker**: set environment variable di host lalu `docker compose up -d`:
+     ```bash
+     export TURNSTILE_SITE_KEY=0x4AAAA...
+     export TURNSTILE_SECRET_KEY=0x4AAAA...
+     docker compose up -d
+     ```
+3. Kosongkan `TURNSTILE_SITE_KEY` bila ingin menonaktifkan captcha sama sekali.
+
+Catatan: default aplikasi memakai *dummy key* resmi Cloudflare yang selalu lolos — cukup untuk uji coba, jangan dipakai produksi.
 
 ## Struktur Proyek
 
