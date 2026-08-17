@@ -44,7 +44,20 @@ Buka:
 - Login petugas: http://127.0.0.1:5000/
 - Admin: http://127.0.0.1:5000/admin
 
-Saat pertama kali dijalankan, database otomatis dibuat dan diisi **data dummy 6 bulan** (60 pelanggan, pencatatan & tagihan) untuk uji coba.
+### Instalasi baru (instansi baru)
+
+Saat pertama kali dijalankan, database otomatis dibuat **kosong** (tanpa data demo) — siap dipakai instansi baru:
+
+1. Buka `/admin` → menu **Pengaturan**: isi nama instansi, alamat, telepon, dan nilai abodemen.
+2. Buka menu **Tarif Progresif**: tambahkan blok tarif per golongan.
+3. Menu **Data Pelanggan**: tambah pelanggan (atau import massal CSV).
+4. Selesai — mulai pencatatan & generate tagihan.
+
+Untuk uji coba dengan data dummy (60 pelanggan, 6 bulan riwayat):
+```bash
+SEED_DEMO=1 python app.py
+```
+(di Windows PowerShell: `$env:SEED_DEMO="1"; python app.py`)
 
 ## Instalasi Docker (dengan Cloudflare Tunnel)
 

@@ -282,7 +282,15 @@ def init_db():
     db.commit()
 
     if first_time:
-        seed_demo(db)
+        # pengaturan default (abodemen) — bisa diubah lewat menu Pengaturan
+        db.execute(
+            "INSERT OR IGNORE INTO pengaturan (kunci, nilai) VALUES ('abodemen', ?)",
+            (str(ABODEMEN),),
+        )
+        db.commit()
+        # data demo hanya dibuat bila diminta (untuk uji coba): SEED_DEMO=1 python app.py
+        if os.environ.get("SEED_DEMO") == "1":
+            seed_demo(db)
 
     db.close()
 

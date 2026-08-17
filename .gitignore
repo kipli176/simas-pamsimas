@@ -16,7 +16,10 @@ pamsimas_september.db-shm
 backup/
 laporan/
 _raw/
-import_sqlite/*.csv
-import_sqlite/*.db
+import_sqlite/
+
+# skrip migrasi internal (tidak untuk instalasi publik)
+buat_import_sqlite.py
+buat_db_september.py
 static/uploads/*
 !static/uploads/.gitkeep
