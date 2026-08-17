@@ -7,3 +7,16 @@ __pycache__/
 pamsimas.db
 pamsimas.db-wal
 pamsimas.db-shm
+pamsimas_import.db
+pamsimas_september.db
+pamsimas_september.db-wal
+pamsimas_september.db-shm
+
+# data pribadi pelanggan: jangan ikut ke repositori publik
+backup/
+laporan/
+_raw/
+import_sqlite/*.csv
+import_sqlite/*.db
+static/uploads/*
+!static/uploads/.gitkeep

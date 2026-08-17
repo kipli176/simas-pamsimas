@@ -331,12 +331,16 @@ function tampilkanInfo(id) {
   const awal = p.last_akhir ?? p.meteran_awal;
   const rata2 = p.rata2_pakai != null ? `${Number(p.rata2_pakai).toFixed(1)} m³/bulan` : '-';
   const alamat = [p.alamat, `RT ${p.rt}/RW ${p.rw}`].filter(Boolean).join(' · ');
+  const tunggakan = Number(p.tunggakan || 0);
   infoBox.innerHTML = `
     <div class="fw-bold mb-1">${esc(p.nomor_meteran)} — ${esc(p.nama)}</div>
     <div class="d-flex justify-content-between"><span>Alamat</span><strong class="text-end">${esc(alamat) || '-'}</strong></div>
     <div class="d-flex justify-content-between"><span>Golongan Tarif</span><strong>${esc(p.golongan_tarif)}</strong></div>
     <div class="d-flex justify-content-between"><span>Meteran Awal Periode Ini</span><strong>${awal}</strong></div>
-    <div class="d-flex justify-content-between"><span>Rata-rata Pemakaian (6 bln)</span><strong>${rata2}</strong></div>`;
+    <div class="d-flex justify-content-between"><span>Rata-rata Pemakaian (6 bln)</span><strong>${rata2}</strong></div>
+    ${tunggakan > 0 ? `
+    <div class="d-flex justify-content-between text-danger"><span>Tunggakan (${p.n_tunggakan} bulan)</span><strong>Rp ${tunggakan.toLocaleString('id-ID')}</strong></div>
+    <div class="small text-danger mt-1"><i class="bi bi-exclamation-triangle"></i> Pelanggan ini masih punya tunggakan — ingatkan saat penagihan.</div>` : ''}`;
   infoBox.style.display = 'block';
   inputAkhir.min = awal;
   inputAkhir.dataset.awal = awal;

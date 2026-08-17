@@ -35,7 +35,10 @@ tbody tr{page-break-inside:avoid;}
 
 <div class="head">
   <div>
-    <h1>LAPORAN TAGIHAN — SIMAS PAMSIMAS</h1>
+    <h1>LAPORAN TAGIHAN — {{ nama_instansi or 'SIMAS PAMSIMAS' }}</h1>
+    {% if alamat_instansi or telepon_instansi %}
+    <div class="sub">{{ alamat_instansi }}{% if telepon_instansi %} · Telp/WA: {{ telepon_instansi }}{% endif %}</div>
+    {% endif %}
     <div class="sub">Periode {{ periode_label(lf.l_awal) }} s.d. {{ periode_label(lf.l_akhir) }}</div>
   </div>
   <div class="meta">

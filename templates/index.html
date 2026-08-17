@@ -154,7 +154,7 @@ table.tbl tbody tr:hover{background:#fafcfd;}
   <div class="brand">
     <div class="logo"><i class="bi bi-droplet-half"></i></div>
     <div>
-      <h1>SIMAS Pamsimas</h1>
+      <h1>{{ pengaturan.get('nama_instansi') or 'SIMAS Pamsimas' }}</h1>
       <small>Sistem Informasi Manajemen Air Sederhana</small>
     </div>
   </div>
@@ -179,6 +179,12 @@ table.tbl tbody tr:hover{background:#fafcfd;}
     </a>
     <a class="nav-link {{ 'active' if tab=='tarif' }}" href="{{ page_url(tab='tarif') }}">
       <i class="bi bi-graph-up-arrow"></i> Tarif Progresif
+    </a>
+    <a class="nav-link {{ 'active' if tab=='audit' }}" href="{{ page_url(tab='audit') }}">
+      <i class="bi bi-shield-check"></i> Audit Log
+    </a>
+    <a class="nav-link {{ 'active' if tab=='pengaturan' }}" href="{{ page_url(tab='pengaturan') }}">
+      <i class="bi bi-gear"></i> Pengaturan
     </a>
     <div class="nav-section-title">Info</div>
     <div class="px-3 small text-muted mb-3">
@@ -738,9 +744,13 @@ table.tbl tbody tr:hover{background:#fafcfd;}
         const p = DATA_PELANGGAN.find(x => String(x.id) === String(id));
         if (!p) { infoBox.style.display = 'none'; return; }
         const meterAwal = p.last_akhir ?? p.meteran_awal;
+        const tunggakan = Number(p.tunggakan || 0);
         infoBox.innerHTML = `
           <div class="d-flex justify-content-between"><span>Golongan Tarif</span><strong>${p.golongan_tarif}</strong></div>
           <div class="d-flex justify-content-between"><span>Meteran Awal Periode Ini</span><strong>${meterAwal}</strong></div>
+          ${tunggakan > 0 ? `
+          <div class="d-flex justify-content-between text-danger"><span>Tunggakan (${p.n_tunggakan} bulan)</span><strong>Rp ${tunggakan.toLocaleString('id-ID')}</strong></div>
+          <div class="small text-danger mt-1"><i class="bi bi-exclamation-triangle"></i> Pelanggan ini masih punya tunggakan — ingatkan saat penagihan.</div>` : ''}
         `;
         infoBox.style.display = 'block';
         inputAkhir.min = meterAwal;
@@ -981,7 +991,7 @@ table.tbl tbody tr:hover{background:#fafcfd;}
           </div>
           <div class="table-responsive">
             <table class="tbl table">
-              <thead><tr><th>No. Meteran</th><th>Nama</th><th>RT/RW</th><th>Jumlah Bulan</th><th>Total Tunggakan</th></tr></thead>
+              <thead><tr><th>No. Meteran</th><th>Nama</th><th>RT/RW</th><th>Jumlah Bulan</th><th>Total Tunggakan</th><th></th></tr></thead>
               <tbody>
                 {% for tg in tunggakan_list %}
                 <tr>
@@ -990,9 +1000,14 @@ table.tbl tbody tr:hover{background:#fafcfd;}
                   <td>{{ tg.rt }}/{{ tg.rw }}</td>
                   <td>{{ tg.n_bulan }}</td>
                   <td class="fw-semibold text-danger">{{ tg.total|rupiah }}</td>
+                  <td class="text-nowrap">
+                    <form method="post" action="{{ url_for('lunasi_semua', pelanggan_id=tg.pelanggan_id) }}" class="d-inline" onsubmit="return confirm('Tandai lunas SEMUA tunggakan {{ tg.nama }} ({{ tg.n_bulan }} bulan)?')">
+                      <button class="btn btn-sm btn-brand"><i class="bi bi-check2-all"></i> Lunasi Semua</button>
+                    </form>
+                  </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="5" class="text-center text-muted py-4">Tidak ada tunggakan.</td></tr>
+                <tr><td colspan="6" class="text-center text-muted py-4">Tidak ada tunggakan.</td></tr>
                 {% endfor %}
               </tbody>
             </table>
@@ -1033,6 +1048,146 @@ table.tbl tbody tr:hover{background:#fafcfd;}
     {% endif %}
 
     {# ======================================================================
+       TAB: AUDIT LOG
+    ====================================================================== #}
+    {% if tab == 'audit' %}
+    <div class="section-title">Audit Log</div>
+    <div class="section-desc">Jejak semua aktivitas penting: pencatatan meteran, pembayaran, pembatalan, dan sinkronisasi offline.</div>
+
+    <form method="get" class="filterbar row g-2 align-items-end">
+      <input type="hidden" name="tab" value="audit">
+      <div class="col-6 col-md-3">
+        <label>Sumber</label>
+        <select name="a_sumber" class="form-select" onchange="this.form.submit()">
+          <option value="">Semua Sumber</option>
+          <option value="online" {{ 'selected' if a_sumber=='online' }}>Online</option>
+          <option value="offline_sync" {{ 'selected' if a_sumber=='offline_sync' }}>Sinkronisasi Offline</option>
+          <option value="pembayaran" {{ 'selected' if a_sumber=='pembayaran' }}>Pembayaran</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label>Anomali</label>
+        <select name="a_anomali" class="form-select" onchange="this.form.submit()">
+          <option value="">Semua</option>
+          <option value="1" {{ 'selected' if a_anomali=='1' }}>Hanya Anomali</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-6">
+        <label>Cari (nomor meteran / petugas / keterangan)</label>
+        <input type="text" name="a_q" value="{{ a_q }}" class="form-control" placeholder="ketik lalu Enter">
+      </div>
+      <div class="col-12 d-flex gap-2 mt-1">
+        <button class="btn btn-brand btn-sm px-3"><i class="bi bi-search"></i> Terapkan</button>
+        <a href="{{ page_url(tab='audit', a_q='', a_sumber='', a_anomali='', a_page=1) }}" class="btn btn-outline-secondary btn-sm px-3">Reset Filter</a>
+      </div>
+    </form>
+
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <div class="count">Menampilkan {{ audit_list|length }} dari {{ a_total }} entri</div>
+      </div>
+      <div class="table-responsive">
+        <table class="tbl table">
+          <thead><tr>
+            <th>Waktu</th><th>Petugas</th><th>Pelanggan</th><th>Periode</th>
+            <th>Meter Awal</th><th>Meter Akhir</th><th>Pakai</th><th>Anomali</th><th>Sumber</th><th>Keterangan</th>
+          </tr></thead>
+          <tbody>
+            {% for a in audit_list %}
+            <tr>
+              <td class="text-nowrap small">{{ a.waktu }}</td>
+              <td>{{ a.petugas or '-' }}</td>
+              <td class="text-nowrap">{% if a.nomor_meteran %}{{ a.nomor_meteran }}{% if a.nama %} — {{ a.nama }}{% endif %}{% else %}-{% endif %}</td>
+              <td>{{ periode_label(a.periode) if a.periode else '-' }}</td>
+              <td>{{ a.meteran_awal if a.meteran_awal is not none else '-' }}</td>
+              <td>{{ a.meteran_akhir if a.meteran_akhir is not none else '-' }}</td>
+              <td>{{ a.pemakaian_m3 if a.pemakaian_m3 is not none else '-' }}</td>
+              <td>{% if a.anomali %}<span class="badge-x b-abodemen">Ya</span>{% else %}-{% endif %}</td>
+              <td>
+                {% if a.sumber == 'offline_sync' %}<span class="badge-x b-belum">Offline</span>
+                {% elif a.sumber == 'pembayaran' %}<span class="badge-x b-lunas">Bayar</span>
+                {% else %}<span class="badge-x b-normal">Online</span>{% endif %}
+              </td>
+              <td class="small">{{ a.keterangan or '-' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="10" class="text-center text-muted py-5">Belum ada aktivitas tercatat. Audit log akan terisi otomatis saat ada pencatatan atau pembayaran baru.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if a_total_pages > 1 %}
+      <div class="pager">
+        <a class="{{ 'disabled' if a_page<=1 }}" href="{{ page_url(tab='audit', a_page=a_page-1) }}">&laquo; Prev</a>
+        <span class="current">{{ a_page }} / {{ a_total_pages }}</span>
+        <a class="{{ 'disabled' if a_page>=a_total_pages }}" href="{{ page_url(tab='audit', a_page=a_page+1) }}">Next &raquo;</a>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {# ======================================================================
+       TAB: PENGATURAN
+    ====================================================================== #}
+    {% if tab == 'pengaturan' %}
+    <div class="section-title">Pengaturan</div>
+    <div class="section-desc">Nilai abodemen dan identitas instansi yang tampil pada struk & laporan cetak.</div>
+    <div class="row g-3">
+      <div class="col-lg-6 d-flex flex-column gap-3">
+        <div class="card-x p-3">
+          <div class="section-title" style="font-size:.95rem;"><i class="bi bi-cash-coin"></i> Pengaturan Abodemen</div>
+          <form method="post" action="{{ url_for('simpan_pengaturan') }}" class="mt-2">
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Nilai Abodemen per Bulan (Rp)</label>
+              <input type="number" name="abodemen" class="form-control form-control-sm" value="{{ abodemen }}" required min="0">
+            </div>
+            <div class="small text-muted mb-2">Berlaku untuk pencatatan & generate tagihan berikutnya. Tagihan yang sudah dibuat tidak berubah.</div>
+            <button type="submit" class="btn btn-brand btn-sm"><i class="bi bi-save"></i> Simpan Pengaturan</button>
+          </form>
+        </div>
+
+        <div class="card-x p-3">
+          <div class="section-title" style="font-size:.95rem;"><i class="bi bi-building"></i> Informasi Instansi</div>
+          <form method="post" action="{{ url_for('simpan_pengaturan') }}" class="mt-2">
+            <input type="hidden" name="abodemen" value="{{ abodemen }}">
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Nama Instansi</label>
+              <input type="text" name="nama_instansi" class="form-control form-control-sm" value="{{ pengaturan.get('nama_instansi', '') }}" placeholder="mis. BUMDes Candimulya">
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Alamat</label>
+              <input type="text" name="alamat_instansi" class="form-control form-control-sm" value="{{ pengaturan.get('alamat_instansi', '') }}" placeholder="mis. Candinegara, Banyumas">
+            </div>
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small fw-semibold">Telepon / WhatsApp</label>
+                <input type="text" name="telepon_instansi" class="form-control form-control-sm" value="{{ pengaturan.get('telepon_instansi', '') }}">
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-semibold">Website</label>
+                <input type="text" name="website_instansi" class="form-control form-control-sm" value="{{ pengaturan.get('website_instansi', '') }}">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-brand btn-sm"><i class="bi bi-save"></i> Simpan Pengaturan</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card-x p-3">
+          <div class="section-title" style="font-size:.95rem;"><i class="bi bi-info-circle"></i> Di Mana Informasi Ini Dipakai?</div>
+          <ul class="small text-muted mb-0 ps-3">
+            <li class="mb-2"><strong>Struk tagihan</strong> (cetak dari admin maupun petugas) — kop struk menampilkan nama, alamat, dan telepon instansi.</li>
+            <li class="mb-2"><strong>Halaman cetak laporan</strong> — kop laporan memakai identitas instansi untuk arsip & laporan ke pihak lain.</li>
+            <li class="mb-2"><strong>Header aplikasi admin</strong> dan <strong>halaman login petugas</strong> — menampilkan nama instansi.</li>
+            <li>Nilai <strong>abodemen</strong> dipakai pada semua pencatatan & generate tagihan, serta kalkulator simulasi di menu Tarif.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ======================================================================
        TAB: TARIF PROGRESIF
     ====================================================================== #}
     {% if tab == 'tarif' %}
@@ -1066,18 +1221,6 @@ table.tbl tbody tr:hover{background:#fafcfd;}
         </div>
       </div>
       <div class="col-lg-5 d-flex flex-column gap-3">
-        <div class="card-x p-3">
-          <div class="section-title" style="font-size:.95rem;"><i class="bi bi-gear"></i> Pengaturan Abodemen</div>
-          <form method="post" action="{{ url_for('simpan_abodemen') }}" class="mt-2">
-            <div class="mb-2">
-              <label class="form-label small fw-semibold">Nilai Abodemen per Bulan (Rp)</label>
-              <input type="number" name="abodemen" class="form-control form-control-sm" value="{{ abodemen }}" required min="0">
-            </div>
-            <button type="submit" class="btn btn-brand btn-sm w-100"><i class="bi bi-save"></i> Simpan Nilai Abodemen</button>
-          </form>
-          <div class="small text-muted mt-2">Berlaku untuk pencatatan & generate tagihan berikutnya. Tagihan yang sudah dibuat tidak berubah.</div>
-        </div>
-
         <div class="card-x p-3">
           {% if tarif_edit_row %}
           <div class="section-title" style="font-size:.95rem;"><i class="bi bi-pencil-square"></i> Ubah Blok Tarif</div>

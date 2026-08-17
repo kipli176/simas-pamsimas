@@ -420,16 +420,27 @@ def hitung_progresif(db, golongan, pemakaian_m3):
     return total, rincian
 
 
+def get_pengaturan(db, kunci, default=""):
+    """Ambil nilai pengaturan; fallback ke default bila belum diatur."""
+    row = db.execute("SELECT nilai FROM pengaturan WHERE kunci=?", (kunci,)).fetchone()
+    if row and row["nilai"] is not None:
+        return row["nilai"]
+    return default
+
+
+def get_semua_pengaturan(db):
+    """Semua pasangan kunci-nilai dari tabel pengaturan."""
+    return {r["kunci"]: r["nilai"] for r in db.execute("SELECT kunci, nilai FROM pengaturan").fetchall()}
+
+
 def get_abodemen(db):
     """Nilai abodemen bulanan dari tabel pengaturan; fallback ke konstanta bila belum diatur."""
-    row = db.execute("SELECT nilai FROM pengaturan WHERE kunci='abodemen'").fetchone()
-    if row and row["nilai"]:
-        try:
-            v = int(row["nilai"])
-            if v >= 0:
-                return v
-        except (ValueError, TypeError):
-            pass
+    try:
+        v = int(get_pengaturan(db, "abodemen", ""))
+        if v >= 0:
+            return v
+    except (ValueError, TypeError):
+        pass
     return ABODEMEN
 
 
@@ -534,9 +545,12 @@ def cek_anomali(db, pelanggan_id, periode, pemakaian_baru):
 
     riwayat = db.execute(
         """SELECT periode, (meteran_akhir - meteran_awal) AS pakai
-           FROM pencatatan WHERE pelanggan_id = ? AND periode < ?
+           FROM pencatatan
+           WHERE pelanggan_id = ? AND periode < ?
+             AND (meteran_akhir - meteran_awal) > 0
+             AND (meteran_akhir - meteran_awal) <= ?
            ORDER BY periode DESC LIMIT 6""",
-        (pelanggan_id, periode),
+        (pelanggan_id, periode, ANOMALI_ABSOLUT_M3),
     ).fetchall()
 
     if len(riwayat) < MIN_RIWAYAT_UTK_ANOMALI:
@@ -824,6 +838,31 @@ def index():
         "jumlah_abodemen": agg["jumlah_abodemen"],
     }
 
+    # ---------- TAB AUDIT LOG ----------
+    a_q = request.args.get("a_q", "").strip()
+    a_sumber = request.args.get("a_sumber", "")
+    a_anomali = request.args.get("a_anomali", "")
+    a_page = get_int_arg("a_page", 1)
+
+    awhere, aparams = [], []
+    if a_q:
+        awhere.append("(a.nomor_meteran LIKE ? OR a.petugas LIKE ? OR a.keterangan LIKE ?)")
+        like = f"%{a_q}%"; aparams += [like, like, like]
+    if a_sumber:
+        awhere.append("a.sumber = ?"); aparams.append(a_sumber)
+    if a_anomali == "1":
+        awhere.append("a.anomali = 1")
+    awhere_sql = " AND ".join(awhere) if awhere else "1=1"
+
+    a_total = db.execute(f"SELECT COUNT(*) c FROM audit_log a WHERE {awhere_sql}", aparams).fetchone()["c"]
+    a_total_pages = max(1, (a_total + PAGE_SIZE - 1) // PAGE_SIZE)
+    a_page = min(a_page, a_total_pages)
+    audit_list = db.execute(
+        f"""SELECT a.*, p.nama FROM audit_log a LEFT JOIN pelanggan p ON p.id = a.pelanggan_id
+            WHERE {awhere_sql} ORDER BY a.id DESC LIMIT ? OFFSET ?""",
+        aparams + [PAGE_SIZE, (a_page - 1) * PAGE_SIZE],
+    ).fetchall()
+
     # ---------- TAB TARIF ----------
     tarif_list = db.execute("SELECT * FROM tarif ORDER BY golongan_tarif, batas_bawah").fetchall()
     tarif_edit = request.args.get("tarif_edit", "")
@@ -839,7 +878,11 @@ def index():
                   (SELECT AVG(pakai) FROM (
                        SELECT (meteran_akhir - meteran_awal) pakai FROM pencatatan
                        WHERE pelanggan_id=p.id AND periode < ? ORDER BY periode DESC LIMIT 6
-                   )) rata2_pakai
+                   )) rata2_pakai,
+                  (SELECT COALESCE(SUM(total_tagihan),0) FROM tagihan t
+                   WHERE t.pelanggan_id=p.id AND t.status_bayar != 'lunas') tunggakan,
+                  (SELECT COUNT(*) FROM tagihan t
+                   WHERE t.pelanggan_id=p.id AND t.status_bayar != 'lunas') n_tunggakan
            FROM pelanggan p WHERE p.aktif=1 ORDER BY p.rw, p.rt, p.nama""",
         (periode, periode),
     ).fetchall()
@@ -919,7 +962,7 @@ def index():
     tunggakan_total_pages = max(1, (tunggakan_total + PAGE_SIZE - 1) // PAGE_SIZE)
     l_tunggakan_page = min(l_tunggakan_page, tunggakan_total_pages)
     tunggakan_list = db.execute(
-        f"""SELECT p.nama, p.nomor_meteran, p.rt, p.rw, COUNT(*) n_bulan,
+        f"""SELECT p.id pelanggan_id, p.nama, p.nomor_meteran, p.rt, p.rw, COUNT(*) n_bulan,
                    COALESCE(SUM(t.total_tagihan),0) total
             FROM tagihan t JOIN pelanggan p ON p.id = t.pelanggan_id
             WHERE {tw_where_sql}
@@ -964,6 +1007,11 @@ def index():
         # tarif
         tarif_list=tarif_list,
         tarif_edit_row=tarif_edit_row,
+        # audit log
+        audit_list=audit_list, a_total=a_total, a_page=a_page, a_total_pages=a_total_pages,
+        a_q=a_q, a_sumber=a_sumber, a_anomali=a_anomali,
+        # pengaturan
+        pengaturan=get_semua_pengaturan(db),
         # pencatatan
         pelanggan_json=pelanggan_json, tarif_json=tarif_json, prefill=prefill,
         prefill_anomali=prefill_anomali,
@@ -1404,7 +1452,7 @@ def generate_tagihan():
 def bayar_tagihan(tagihan_id):
     db = get_db()
     t = db.execute(
-        "SELECT t.*, p.nama FROM tagihan t JOIN pelanggan p ON p.id=t.pelanggan_id WHERE t.id=?",
+        "SELECT t.*, p.nama, p.nomor_meteran FROM tagihan t JOIN pelanggan p ON p.id=t.pelanggan_id WHERE t.id=?",
         (tagihan_id,),
     ).fetchone()
     if not t:
@@ -1413,6 +1461,14 @@ def bayar_tagihan(tagihan_id):
     db.execute(
         "UPDATE tagihan SET status_bayar='lunas', waktu_bayar=?, dicatat_oleh='admin' WHERE id=?",
         (datetime.now().strftime("%d-%m-%Y %H:%M"), tagihan_id),
+    )
+    db.execute(
+        """INSERT INTO audit_log
+           (petugas, pelanggan_id, nomor_meteran, periode, meteran_awal, meteran_akhir,
+            pemakaian_m3, anomali, sumber, keterangan)
+           VALUES ('admin', ?, ?, ?, NULL, NULL, ?, 0, 'pembayaran', ?)""",
+        (t["pelanggan_id"], t["nomor_meteran"], t["periode"], t["pemakaian_m3"],
+         f"Tagihan {periode_label(t['periode'])} ditandai lunas {rupiah(t['total_tagihan'])}"),
     )
     db.commit()
     flash(f"Tagihan {t['nama']} ditandai lunas.", "success")
@@ -1424,7 +1480,7 @@ def bayar_tagihan(tagihan_id):
 def batal_lunas(tagihan_id):
     db = get_db()
     t = db.execute(
-        "SELECT t.*, p.nama FROM tagihan t JOIN pelanggan p ON p.id=t.pelanggan_id WHERE t.id=?",
+        "SELECT t.*, p.nama, p.nomor_meteran FROM tagihan t JOIN pelanggan p ON p.id=t.pelanggan_id WHERE t.id=?",
         (tagihan_id,),
     ).fetchone()
     if not t:
@@ -1434,9 +1490,42 @@ def batal_lunas(tagihan_id):
         "UPDATE tagihan SET status_bayar='belum_bayar', waktu_bayar=NULL, dicatat_oleh=NULL WHERE id=?",
         (tagihan_id,),
     )
+    db.execute(
+        """INSERT INTO audit_log
+           (petugas, pelanggan_id, nomor_meteran, periode, meteran_awal, meteran_akhir,
+            pemakaian_m3, anomali, sumber, keterangan)
+           VALUES ('admin', ?, ?, ?, NULL, NULL, ?, 0, 'pembayaran', ?)""",
+        (t["pelanggan_id"], t["nomor_meteran"], t["periode"], t["pemakaian_m3"],
+         f"Pembatalan lunas tagihan {periode_label(t['periode'])} {rupiah(t['total_tagihan'])}"),
+    )
     db.commit()
     flash(f"Pembayaran {t['nama']} dibatalkan — tagihan kembali berstatus belum bayar.", "warning")
     return redirect(_kembali_aman("tagihan"))
+
+
+@app.route("/tagihan/lunasi-semua/<int:pelanggan_id>", methods=["POST"])
+@perlu_auth_admin
+def lunasi_semua(pelanggan_id):
+    db = get_db()
+    p = db.execute("SELECT * FROM pelanggan WHERE id=?", (pelanggan_id,)).fetchone()
+    if not p:
+        flash("Pelanggan tidak ditemukan.", "danger")
+        return redirect(_kembali_aman("laporan"))
+    n = db.execute(
+        "UPDATE tagihan SET status_bayar='lunas', waktu_bayar=?, dicatat_oleh='admin' "
+        "WHERE pelanggan_id=? AND status_bayar != 'lunas'",
+        (datetime.now().strftime("%d-%m-%Y %H:%M"), pelanggan_id),
+    ).rowcount
+    db.execute(
+        """INSERT INTO audit_log
+           (petugas, pelanggan_id, nomor_meteran, periode, meteran_awal, meteran_akhir,
+            pemakaian_m3, anomali, sumber, keterangan)
+           VALUES ('admin', ?, ?, NULL, NULL, NULL, NULL, 0, 'pembayaran', ?)""",
+        (pelanggan_id, p["nomor_meteran"], f"Lunasi semua: {n} tagihan {p['nama']}"),
+    )
+    db.commit()
+    flash(f"Semua tunggakan {p['nama']} ditandai lunas ({n} tagihan).", "success")
+    return redirect(_kembali_aman("laporan"))
 
 
 @app.route("/tagihan/batch-lunas", methods=["POST"])
@@ -1452,6 +1541,20 @@ def batch_lunas():
         f"UPDATE tagihan SET status_bayar='lunas', waktu_bayar=?, dicatat_oleh='admin' WHERE id IN ({tempat})",
         [datetime.now().strftime("%d-%m-%Y %H:%M")] + ids,
     )
+    # audit per tagihan
+    rows = db.execute(
+        f"SELECT t.*, p.nomor_meteran FROM tagihan t JOIN pelanggan p ON p.id=t.pelanggan_id WHERE t.id IN ({tempat})",
+        ids,
+    ).fetchall()
+    for t in rows:
+        db.execute(
+            """INSERT INTO audit_log
+               (petugas, pelanggan_id, nomor_meteran, periode, meteran_awal, meteran_akhir,
+                pemakaian_m3, anomali, sumber, keterangan)
+               VALUES ('admin', ?, ?, ?, NULL, NULL, ?, 0, 'pembayaran', ?)""",
+            (t["pelanggan_id"], t["nomor_meteran"], t["periode"], t["pemakaian_m3"],
+             f"Tagihan {periode_label(t['periode'])} ditandai lunas {rupiah(t['total_tagihan'])} (batch)"),
+        )
     db.commit()
     flash(f"{len(ids)} tagihan ditandai lunas sekaligus.", "success")
     return redirect(_kembali_aman("tagihan"))
@@ -1471,9 +1574,18 @@ def struk_admin(tagihan_id):
         (p["id"], tagihan["periode"]),
     ).fetchone()
     rincian = json.loads(tagihan["rincian_tarif"]) if tagihan["rincian_tarif"] else []
+    tunggakan_lain = db.execute(
+        "SELECT COALESCE(SUM(total_tagihan),0) t FROM tagihan "
+        "WHERE pelanggan_id=? AND status_bayar != 'lunas' AND periode != ?",
+        (p["id"], tagihan["periode"]),
+    ).fetchone()["t"]
     return render_template(
         "struk.html", p=p, catat=catat, tagihan=tagihan, rincian=rincian,
         periode_label_str=periode_label(tagihan["periode"]),
+        tunggakan_lain=tunggakan_lain,
+        nama_instansi=get_pengaturan(db, "nama_instansi"),
+        alamat_instansi=get_pengaturan(db, "alamat_instansi"),
+        telepon_instansi=get_pengaturan(db, "telepon_instansi"),
         dicetak_oleh="Admin",
         waktu_cetak=datetime.now().strftime("%d-%m-%Y %H:%M"),
     )
@@ -1572,27 +1684,36 @@ def ubah_tarif(tarif_id):
     return redirect(url_for("index", tab="tarif"))
 
 
-@app.route("/pengaturan/abodemen", methods=["POST"])
+@app.route("/pengaturan/simpan", methods=["POST"])
 @perlu_auth_admin
-def simpan_abodemen():
+def simpan_pengaturan():
     db = get_db()
     try:
-        nilai = int(request.form["abodemen"])
+        nilai_abodemen = int(request.form["abodemen"])
     except (KeyError, ValueError):
         flash("Nilai abodemen harus berupa angka.", "danger")
-        return redirect(url_for("index", tab="tarif"))
-    if nilai < 0:
+        return redirect(url_for("index", tab="pengaturan"))
+    if nilai_abodemen < 0:
         flash("Nilai abodemen tidak boleh negatif.", "danger")
-        return redirect(url_for("index", tab="tarif"))
-    db.execute(
-        "INSERT INTO pengaturan (kunci, nilai) VALUES ('abodemen', ?) "
-        "ON CONFLICT(kunci) DO UPDATE SET nilai=excluded.nilai",
-        (str(nilai),),
-    )
+        return redirect(url_for("index", tab="pengaturan"))
+
+    data = {
+        "abodemen": str(nilai_abodemen),
+        "nama_instansi": request.form.get("nama_instansi", "").strip(),
+        "alamat_instansi": request.form.get("alamat_instansi", "").strip(),
+        "telepon_instansi": request.form.get("telepon_instansi", "").strip(),
+        "website_instansi": request.form.get("website_instansi", "").strip(),
+    }
+    for kunci, nilai in data.items():
+        db.execute(
+            "INSERT INTO pengaturan (kunci, nilai) VALUES (?, ?) "
+            "ON CONFLICT(kunci) DO UPDATE SET nilai=excluded.nilai",
+            (kunci, nilai),
+        )
     db.commit()
-    flash(f"Abodemen disimpan: {rupiah(nilai)}. Berlaku untuk pencatatan & generate tagihan "
-          f"berikutnya — tagihan yang sudah dibuat tidak berubah.", "success")
-    return redirect(url_for("index", tab="tarif"))
+    flash(f"Pengaturan disimpan. Abodemen {rupiah(nilai_abodemen)} berlaku untuk pencatatan & "
+          f"generate tagihan berikutnya — tagihan yang sudah dibuat tidak berubah.", "success")
+    return redirect(url_for("index", tab="pengaturan"))
 
 
 @app.route("/tarif/<int:tarif_id>/hapus", methods=["POST"])
@@ -1672,8 +1793,13 @@ def cetak_laporan():
         params,
     ).fetchall()
 
-    return render_template("laporan_cetak.html", rows=rows, agg=agg, lf=lf,
-                           waktu_cetak=datetime.now().strftime("%d-%m-%Y %H:%M"))
+    return render_template(
+        "laporan_cetak.html", rows=rows, agg=agg, lf=lf,
+        nama_instansi=get_pengaturan(db, "nama_instansi"),
+        alamat_instansi=get_pengaturan(db, "alamat_instansi"),
+        telepon_instansi=get_pengaturan(db, "telepon_instansi"),
+        waktu_cetak=datetime.now().strftime("%d-%m-%Y %H:%M"),
+    )
 
 
 # =========================================================
@@ -1689,6 +1815,7 @@ def petugas_login():
         "petugas_login.html",
         daftar_petugas=daftar_petugas(db),
         turnstile_site_key=TURNSTILE_SITE_KEY,
+        nama_instansi=get_pengaturan(db, "nama_instansi"),
     )
 
 
@@ -1782,7 +1909,11 @@ def petugas_dashboard():
                   (SELECT AVG(pakai) FROM (
                        SELECT (meteran_akhir - meteran_awal) pakai FROM pencatatan
                        WHERE pelanggan_id=p.id AND periode < ? ORDER BY periode DESC LIMIT 6
-                   )) rata2_pakai
+                   )) rata2_pakai,
+                  (SELECT COALESCE(SUM(total_tagihan),0) FROM tagihan t
+                   WHERE t.pelanggan_id=p.id AND t.status_bayar != 'lunas') tunggakan,
+                  (SELECT COUNT(*) FROM tagihan t
+                   WHERE t.pelanggan_id=p.id AND t.status_bayar != 'lunas') n_tunggakan
            FROM pelanggan p WHERE p.aktif=1 AND p.petugas=? ORDER BY p.rw, p.rt, p.nama""",
         (periode, periode, nama_petugas),
     ).fetchall()
@@ -1820,9 +1951,18 @@ def petugas_struk(pelanggan_id):
         return redirect(url_for("petugas_dashboard"))
 
     rincian = json.loads(tagihan["rincian_tarif"]) if tagihan["rincian_tarif"] else []
+    tunggakan_lain = db.execute(
+        "SELECT COALESCE(SUM(total_tagihan),0) t FROM tagihan "
+        "WHERE pelanggan_id=? AND status_bayar != 'lunas' AND periode != ?",
+        (pelanggan_id, periode),
+    ).fetchone()["t"]
     return render_template(
         "struk.html", p=p, catat=catat, tagihan=tagihan, rincian=rincian,
         periode_label_str=periode_label(periode),
+        tunggakan_lain=tunggakan_lain,
+        nama_instansi=get_pengaturan(db, "nama_instansi"),
+        alamat_instansi=get_pengaturan(db, "alamat_instansi"),
+        telepon_instansi=get_pengaturan(db, "telepon_instansi"),
         dicetak_oleh=session.get("petugas", "-"),
         waktu_cetak=datetime.now().strftime("%d-%m-%Y %H:%M"),
     )

@@ -39,7 +39,9 @@
 <body>
 
   <div class="center">
-    <div class="title">PAMSIMAS</div>
+    <div class="title">{{ nama_instansi or 'PAMSIMAS' }}</div>
+    {% if alamat_instansi %}<div class="small">{{ alamat_instansi }}</div>{% endif %}
+    {% if telepon_instansi %}<div class="small">Telp/WA: {{ telepon_instansi }}</div>{% endif %}
     <div class="small">Struk Tagihan Air Bersih</div>
     <div class="small">Periode: {{ periode_label_str }}</div>
   </div>
@@ -82,6 +84,20 @@
     <span>Status</span>
     <span class="bold">{{ "LUNAS" if tagihan.status_bayar == "lunas" else "BELUM BAYAR" }}</span>
   </div>
+
+  {% if tunggakan_lain and tunggakan_lain > 0 %}
+  <div class="line"></div>
+  <table>
+    <tr>
+      <td>Tunggakan Bulan Sebelumnya</td>
+      <td style="text-align:right;">Rp {{ "{:,.0f}".format(tunggakan_lain).replace(",",".") }}</td>
+    </tr>
+    <tr class="total-row">
+      <td>TOTAL + TUNGGAKAN</td>
+      <td style="text-align:right;">Rp {{ "{:,.0f}".format(tunggakan_lain + (tagihan.total_tagihan if tagihan.status_bayar != "lunas" else 0)).replace(",",".") }}</td>
+    </tr>
+  </table>
+  {% endif %}
 
   {% if catat and catat.alasan %}
   <div class="line"></div>
