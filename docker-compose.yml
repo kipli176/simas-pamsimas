@@ -16,12 +16,11 @@ services:
       - TURNSTILE_SITE_KEY=${TURNSTILE_SITE_KEY:-1x00000000000000000000AA}
       - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY:-1x0000000000000000000000000000000AA}
     volumes:
-      - simas_data:/data
+      # folder ./data di host dipasang ke /data di container:
+      # taruh pamsimas.db di ./data/ untuk dipakai aplikasi (termasuk uploads foto)
+      - ./data:/data
     networks:
       - cloudflared
-
-volumes:
-  simas_data:
 
 networks:
   cloudflared:

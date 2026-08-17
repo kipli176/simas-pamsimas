@@ -61,7 +61,7 @@ SEED_DEMO=1 python app.py
 
 ## Instalasi Docker (dengan Cloudflare Tunnel)
 
-`docker-compose.yml` sudah dikonfigurasi bergabung ke network `cloudflared` (external), dengan volume `simas_data` untuk database & foto.
+`docker-compose.yml` sudah dikonfigurasi bergabung ke network `cloudflared` (external), dengan folder `./data` di host yang dipasang ke `/data` di container untuk database & foto.
 
 ```bash
 # pastikan network cloudflared sudah ada (biasanya dibuat container cloudflared)
@@ -76,7 +76,13 @@ export SECRET_KEY=rahasia-session
 docker compose up -d --build
 ```
 
-Volume baru yang kosong otomatis di-seed data dummy saat start pertama. Arahkan Cloudflare Tunnel ke `simas:5000`.
+**Mengelola database:**
+- File database dibaca dari `./data/pamsimas.db` (folder `data` di samping `docker-compose.yml`).
+- Mau memakai database lain (mis. hasil backup)? Cukup `docker compose down`, timpa `./data/pamsimas.db`, lalu `docker compose up -d`.
+- Bila folder `data` kosong, database baru otomatis dibuat saat start pertama.
+- Foto meteran tersimpan di `./data/uploads/`.
+
+Arahkan Cloudflare Tunnel ke `simas:5000`.
 
 ## Kredensial Default
 
