@@ -733,6 +733,7 @@ def filter_laporan(args, periode, periode_list):
     l_rw = args.get("l_rw", "")
     l_rt = args.get("l_rt", "")
     l_golongan = args.get("l_golongan", "")
+    l_petugas = args.get("l_petugas", "")
     l_jenis = args.get("l_jenis", "")
     l_status = args.get("l_status", "")
 
@@ -743,6 +744,8 @@ def filter_laporan(args, periode, periode_list):
         where.append("p.rt = ?"); params.append(l_rt)
     if l_golongan:
         where.append("p.golongan_tarif = ?"); params.append(l_golongan)
+    if l_petugas:
+        where.append("p.petugas = ?"); params.append(l_petugas)
     if l_jenis:
         where.append("t.jenis = ?"); params.append(l_jenis)
     if l_status:
@@ -750,7 +753,8 @@ def filter_laporan(args, periode, periode_list):
 
     return {
         "l_awal": l_awal, "l_akhir": l_akhir, "l_rw": l_rw, "l_rt": l_rt,
-        "l_golongan": l_golongan, "l_jenis": l_jenis, "l_status": l_status,
+        "l_golongan": l_golongan, "l_petugas": l_petugas,
+        "l_jenis": l_jenis, "l_status": l_status,
         "where_sql": " AND ".join(where),
         "params": params,
     }
@@ -905,7 +909,8 @@ def index():
     lf = filter_laporan(request.args, periode, periode_list)
     l_awal, l_akhir = lf["l_awal"], lf["l_akhir"]
     l_rw, l_rt = lf["l_rw"], lf["l_rt"]
-    l_golongan, l_jenis, l_status = lf["l_golongan"], lf["l_jenis"], lf["l_status"]
+    l_golongan = lf["l_golongan"]
+    l_petugas, l_jenis, l_status = lf["l_petugas"], lf["l_jenis"], lf["l_status"]
     l_page = get_int_arg("l_page", 1)
     l_tunggakan_page = get_int_arg("lt_page", 1)
 
@@ -959,6 +964,8 @@ def index():
         tw_where.append("p.rt = ?"); tw_params.append(l_rt)
     if l_golongan:
         tw_where.append("p.golongan_tarif = ?"); tw_params.append(l_golongan)
+    if l_petugas:
+        tw_where.append("p.petugas = ?"); tw_params.append(l_petugas)
     tw_where_sql = " AND ".join(tw_where)
     tunggakan_total = db.execute(
         f"""SELECT COUNT(*) c FROM (
@@ -1032,7 +1039,7 @@ def index():
         tunggakan_total_pages=tunggakan_total_pages,
         l_total=l_total, l_page=l_page, l_total_pages=l_total_pages,
         l_awal=l_awal, l_akhir=l_akhir, l_rw=l_rw, l_rt=l_rt, l_golongan=l_golongan,
-        l_jenis=l_jenis, l_status=l_status,
+        l_petugas=l_petugas, l_jenis=l_jenis, l_status=l_status,
         l_rt_list=daftar_rt(db, l_rw) if l_rw else daftar_rt(db),
     )
 
@@ -1617,8 +1624,11 @@ def export_tagihan():
     tf = filter_tagihan(request.args, periode)
     where_sql, params = tf["where_sql"], tf["params"]
     rows = db.execute(
-        f"""SELECT t.*, p.nama, p.nomor_meteran, p.rt, p.rw, p.golongan_tarif
-            FROM tagihan t JOIN pelanggan p ON p.id = t.pelanggan_id
+        f"""SELECT t.*, p.nama, p.nomor_meteran, p.rt, p.rw, p.golongan_tarif,
+                   c.meteran_awal, c.meteran_akhir, c.petugas
+            FROM tagihan t
+            JOIN pelanggan p ON p.id = t.pelanggan_id
+            LEFT JOIN pencatatan c ON c.pelanggan_id = t.pelanggan_id AND c.periode = t.periode
             WHERE {where_sql} ORDER BY p.rw, p.rt, p.nama""",
         params,
     ).fetchall()
@@ -1626,10 +1636,14 @@ def export_tagihan():
     buf = io.StringIO()
     writer = csv.writer(buf)
     writer.writerow(["Periode", "No. Meteran", "Nama", "RW", "RT", "Golongan", "Jenis",
-                     "Pemakaian (m3)", "Total Tagihan", "Status Bayar", "Waktu Bayar", "Dicatat Oleh"])
+                     "Meteran Awal", "Meteran Akhir", "Pemakaian (m3)", "Petugas",
+                     "Total Tagihan", "Status Bayar", "Waktu Bayar", "Dicatat Oleh"])
     for r in rows:
         writer.writerow([r["periode"], r["nomor_meteran"], r["nama"], r["rw"], r["rt"],
-                         r["golongan_tarif"], r["jenis"], r["pemakaian_m3"],
+                         r["golongan_tarif"], r["jenis"],
+                         r["meteran_awal"] if r["meteran_awal"] is not None else "",
+                         r["meteran_akhir"] if r["meteran_akhir"] is not None else "",
+                         r["pemakaian_m3"], r["petugas"] or "",
                          r["total_tagihan"], r["status_bayar"], r["waktu_bayar"] or "", r["dicatat_oleh"] or ""])
     return Response(
         buf.getvalue(),
@@ -1762,8 +1776,11 @@ def export_laporan():
 
     rows = db.execute(
         f"""SELECT t.periode, p.nomor_meteran, p.nama, p.rw, p.rt, p.golongan_tarif,
-                   t.jenis, t.pemakaian_m3, t.total_tagihan, t.status_bayar
-            FROM tagihan t JOIN pelanggan p ON p.id = t.pelanggan_id
+                   t.jenis, c.meteran_awal, c.meteran_akhir, t.pemakaian_m3,
+                   c.petugas, t.total_tagihan, t.status_bayar
+            FROM tagihan t
+            JOIN pelanggan p ON p.id = t.pelanggan_id
+            LEFT JOIN pencatatan c ON c.pelanggan_id = t.pelanggan_id AND c.periode = t.periode
             WHERE {where_sql}
             ORDER BY t.periode DESC, p.rw, p.rt, p.nama""",
         params,
@@ -1772,11 +1789,15 @@ def export_laporan():
     buf = io.StringIO()
     writer = csv.writer(buf)
     writer.writerow(["Periode", "No. Meteran", "Nama", "RW", "RT", "Golongan",
-                      "Jenis", "Pemakaian (m3)", "Total Tagihan", "Status Bayar"])
+                     "Jenis", "Meteran Awal", "Meteran Akhir", "Pemakaian (m3)",
+                     "Petugas", "Total Tagihan", "Status Bayar"])
     for r in rows:
         writer.writerow([r["periode"], r["nomor_meteran"], r["nama"], r["rw"], r["rt"],
-                          r["golongan_tarif"], r["jenis"], r["pemakaian_m3"],
-                          r["total_tagihan"], r["status_bayar"]])
+                         r["golongan_tarif"], r["jenis"],
+                         r["meteran_awal"] if r["meteran_awal"] is not None else "",
+                         r["meteran_akhir"] if r["meteran_akhir"] is not None else "",
+                         r["pemakaian_m3"], r["petugas"] or "",
+                         r["total_tagihan"], r["status_bayar"]])
 
     filename = f"laporan_pamsimas_{l_awal}_sd_{l_akhir}.csv"
     return Response(

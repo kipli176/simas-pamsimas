@@ -46,6 +46,7 @@ tbody tr{page-break-inside:avoid;}
     <div>Filter:
       {{ ('RW ' + lf.l_rw) if lf.l_rw else 'Semua RW' }}{{ (' · RT ' + lf.l_rt) if lf.l_rt }}
       {{ ('· ' + lf.l_golongan) if lf.l_golongan }}
+      {{ ('· Petugas ' + lf.l_petugas) if lf.l_petugas }}
       {{ ('· ' + ('Abodemen' if lf.l_jenis=='abodemen' else 'Normal')) if lf.l_jenis }}
       {{ ('· ' + ('Lunas' if lf.l_status=='lunas' else 'Belum Bayar')) if lf.l_status }}
     </div>
