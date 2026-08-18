@@ -4,8 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Masuk Petugas — SIMAS Pamsimas</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap-icons.css') }}">
+<link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/icon-32.png') }}">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-180.png') }}">
+<meta name="theme-color" content="#063a4f">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--brand-900:#063a4f; --brand-700:#0b6285; --brand-600:#0e7fae; --brand-100:#e7f4fa; --ink:#1e2b33; --muted:#6b7c86; --line:#e6edf1;}
@@ -17,7 +21,6 @@ body{font-family:'Inter',system-ui,sans-serif; background:linear-gradient(120deg
 .login-head small{color:rgba(255,255,255,.75); font-size:.78rem;}
 .card-login{background:#fff; border-radius:16px; padding:28px 26px; width:100%; max-width:420px; box-shadow:0 18px 45px rgba(16,42,54,.35);}
 .card-login h5{font-weight:800; color:var(--ink);}
-.pin-hint{background:var(--brand-100); border:1px solid #cfe9f5; border-radius:8px; padding:8px 12px; font-size:.78rem; color:var(--brand-700);}
 .btn-brand{background:var(--brand-600); border-color:var(--brand-600); color:#fff; font-weight:700;}
 .btn-brand:hover{background:var(--brand-700); border-color:var(--brand-700); color:#fff;}
 .app-footer{color:rgba(255,255,255,.75); text-align:center; font-size:.78rem; margin-top:22px;}
@@ -60,7 +63,6 @@ body{font-family:'Inter',system-ui,sans-serif; background:linear-gradient(120deg
         <label class="form-label small fw-semibold">PIN</label>
         <input type="password" name="pin" class="form-control" inputmode="numeric" maxlength="6" placeholder="masukkan PIN" required>
       </div>
-      <div class="pin-hint mb-3"><i class="bi bi-info-circle"></i> PIN sama untuk semua petugas: <strong>123456</strong></div>
       {% if turnstile_site_key %}
       <div class="cf-turnstile mb-3 d-flex justify-content-center" data-sitekey="{{ turnstile_site_key }}"></div>
       {% endif %}
@@ -71,6 +73,8 @@ body{font-family:'Inter',system-ui,sans-serif; background:linear-gradient(120deg
   <footer class="app-footer">
     &copy; <span id="tahunFooter"></span> SIMAS — Sistem Informasi Pamsimas &middot; dibuat oleh <strong>kipli.net</strong>
   </footer>
+  <script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
   <script>document.getElementById('tahunFooter').textContent = new Date().getFullYear();</script>
   {% if turnstile_site_key %}
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>

@@ -1438,6 +1438,15 @@ def uploaded_file(filename):
     return send_from_directory(UPLOAD_DIR, filename)
 
 
+@app.route("/service-worker.js")
+def service_worker():
+    """Service worker PWA harus dilayani dari root scope."""
+    return send_from_directory(
+        os.path.join(BASE_DIR, "static"), "service-worker.js",
+        mimetype="application/javascript",
+    )
+
+
 # =========================================================
 # AKSI: TAGIHAN
 # =========================================================
