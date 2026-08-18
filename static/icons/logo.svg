@@ -6,7 +6,12 @@
     </linearGradient>
   </defs>
   <rect width="512" height="512" fill="url(#bg)"/>
-  <path d="M256 84 C256 84 152 212 152 318 a104 104 0 0 0 208 0 C360 212 256 84 256 84 Z" fill="#ffffff"/>
-  <path d="M198 336 q29 -13 58 0 t58 0" stroke="#0e7fae" stroke-width="13" fill="none" stroke-linecap="round"/>
-  <path d="M216 368 q20 -11 40 0 t40 0" stroke="#0e7fae" stroke-width="13" fill="none" stroke-linecap="round" opacity=".65"/>
+  <path d="M256 72
+           C256 72 150 190 150 300
+           C150 358 197 420 256 420
+           C315 420 362 358 362 300
+           C362 190 256 72 256 72 Z"
+        fill="#ffffff"/>
+  <path d="M196 340 q30 -13 60 0 t60 0" stroke="#0e7fae" stroke-width="13" fill="none" stroke-linecap="round"/>
+  <path d="M214 372 q21 -11 42 0 t42 0" stroke="#0e7fae" stroke-width="13" fill="none" stroke-linecap="round" opacity=".65"/>
 </svg>
