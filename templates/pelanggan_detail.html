@@ -82,12 +82,18 @@ table.tbl tbody td{padding:9px 12px; vertical-align:middle; border-bottom:1px so
           <div class="rowx"><span>Status</span><strong>{% if p.aktif %}<span class="badge-x b-normal">Aktif</span>{% else %}<span class="badge-x b-nonaktif">Nonaktif</span>{% endif %}</strong></div>
           <div class="rowx"><span>Terdaftar Sejak</span><strong class="small">{{ p.created_at }}</strong></div>
         </div>
-        <form method="post" action="{{ url_for('toggle_aktif_pelanggan', pelanggan_id=p.id) }}" class="mt-2"
-              onsubmit="return confirm('{{ 'Nonaktifkan' if p.aktif else 'Aktifkan kembali' }} pelanggan ini?')">
-          <button type="submit" class="btn btn-sm w-100 {{ 'btn-outline-danger' if p.aktif else 'btn-outline-success' }}">
-            {% if p.aktif %}<i class="bi bi-person-x"></i> Nonaktifkan Pelanggan{% else %}<i class="bi bi-person-check"></i> Aktifkan Kembali{% endif %}
-          </button>
-        </form>
+        <div class="d-flex gap-2 mt-2">
+          <form method="post" action="{{ url_for('toggle_aktif_pelanggan', pelanggan_id=p.id) }}" class="flex-fill"
+                onsubmit="return confirm('{{ 'Nonaktifkan' if p.aktif else 'Aktifkan kembali' }} pelanggan ini?')">
+            <button type="submit" class="btn btn-sm w-100 {{ 'btn-outline-danger' if p.aktif else 'btn-outline-success' }}">
+              {% if p.aktif %}<i class="bi bi-person-x"></i> Nonaktifkan{% else %}<i class="bi bi-person-check"></i> Aktifkan{% endif %}
+            </button>
+          </form>
+          <form method="post" action="{{ url_for('hapus_pelanggan', pelanggan_id=p.id) }}" class="flex-fill"
+                onsubmit="return confirm('Hapus pelanggan {{ p.nama }} ({{ p.nomor_meteran }})?\n\nSEMUA data terkait akan ikut terhapus permanen: pencatatan meteran, tagihan, foto bukti, dan riwayat audit. Tindakan ini tidak bisa dibatalkan.')">
+            <button type="submit" class="btn btn-sm w-100 btn-outline-danger"><i class="bi bi-trash"></i> Hapus</button>
+          </form>
+        </div>
         <div class="small text-muted mt-2">Pelanggan nonaktif tidak muncul di dashboard petugas dan tidak ikut generate tagihan, tetapi riwayatnya tetap tersimpan.</div>
       </div>
     </div>

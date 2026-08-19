@@ -114,6 +114,8 @@ table.tbl tbody tr:hover{background:#fafcfd;}
 .btn-brand:hover{background:var(--brand-700); border-color:var(--brand-700); color:#fff;}
 .btn-outline-brand{border-color:var(--brand-600); color:var(--brand-700); font-weight:600;}
 .btn-outline-brand:hover{background:var(--brand-600); color:#fff;}
+.btn-xs{padding:2px 8px; font-size:.72rem; border-radius:7px;}
+.btn-xs i{font-size:.75rem;}
 
 /* ---------- Pagination ---------- */
 .pager{display:flex; align-items:center; gap:6px; padding:12px 16px;}
@@ -510,10 +512,12 @@ table.tbl tbody tr:hover{background:#fafcfd;}
                   <td>{% if p.id in tercatat_ids %}<span class="badge-x b-normal">Sudah Dicatat</span>{% else %}<span class="badge-x b-abodemen">Belum Dicatat</span>{% endif %}</td>
                   <td>{% if p.aktif %}<span class="badge-x b-normal">Aktif</span>{% else %}<span class="badge-x b-nonaktif">Nonaktif</span>{% endif %}</td>
                   <td class="text-nowrap">
-                    {% if p.id not in tercatat_ids %}
-                    <a class="btn btn-sm btn-brand" href="{{ url_for('index', tab='catat', prefill_pelanggan_id=p.id) }}" title="Langsung isi pencatatan untuk pelanggan ini"><i class="bi bi-pencil-square"></i> Catat</a>
-                    {% endif %}
-                    <a class="btn btn-sm btn-outline-brand" href="{{ url_for('detail_pelanggan', pelanggan_id=p.id) }}" title="Detail & riwayat pelanggan"><i class="bi bi-eye"></i> Detail</a>
+                    <div class="d-flex gap-1">
+                      {% if p.id not in tercatat_ids %}
+                      <a class="btn btn-xs btn-brand" href="{{ url_for('index', tab='catat', prefill_pelanggan_id=p.id) }}" title="Langsung isi pencatatan untuk pelanggan ini"><i class="bi bi-pencil-square"></i> Catat</a>
+                      {% endif %}
+                      <a class="btn btn-xs btn-outline-brand" href="{{ url_for('detail_pelanggan', pelanggan_id=p.id) }}" title="Detail & riwayat pelanggan"><i class="bi bi-eye"></i> Detail</a>
+                    </div>
                   </td>
                 </tr>
                 {% else %}

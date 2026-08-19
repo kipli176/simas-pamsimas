@@ -1135,6 +1135,38 @@ def toggle_aktif_pelanggan(pelanggan_id):
     return redirect(_kembali_aman())
 
 
+@app.route("/pelanggan/<int:pelanggan_id>/hapus", methods=["POST"])
+@perlu_auth_admin
+def hapus_pelanggan(pelanggan_id):
+    db = get_db()
+    p = db.execute("SELECT * FROM pelanggan WHERE id=?", (pelanggan_id,)).fetchone()
+    if not p:
+        flash("Pelanggan tidak ditemukan.", "danger")
+        return redirect(url_for("index", tab="pelanggan"))
+
+    # hapus file foto bukti meteran milik pelanggan ini (jika ada)
+    for r in db.execute(
+        "SELECT foto FROM pencatatan WHERE pelanggan_id=? AND foto IS NOT NULL", (pelanggan_id,)
+    ).fetchall():
+        try:
+            os.remove(os.path.join(UPLOAD_DIR, os.path.basename(r["foto"])))
+        except OSError:
+            pass
+
+    # hapus semua data terkait, lalu pelanggannya sendiri
+    db.execute("DELETE FROM pencatatan WHERE pelanggan_id=?", (pelanggan_id,))
+    db.execute("DELETE FROM tagihan WHERE pelanggan_id=?", (pelanggan_id,))
+    db.execute("DELETE FROM audit_log WHERE pelanggan_id=?", (pelanggan_id,))
+    db.execute("DELETE FROM pelanggan WHERE id=?", (pelanggan_id,))
+    db.commit()
+    flash(
+        f"Pelanggan {p['nama']} ({p['nomor_meteran']}) beserta seluruh pencatatan, "
+        "tagihan, dan riwayat auditnya berhasil dihapus.",
+        "success",
+    )
+    return redirect(url_for("index", tab="pelanggan"))
+
+
 @app.route("/pelanggan/<int:pelanggan_id>")
 @perlu_auth_admin
 def detail_pelanggan(pelanggan_id):
