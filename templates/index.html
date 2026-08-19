@@ -137,7 +137,7 @@ table.tbl tbody tr:hover{background:#fafcfd;}
 .wizard-row .form-label{min-height:26px; display:flex; align-items:center;}
 .info-pelanggan{background:var(--brand-100); border:1px solid #cfe9f5; border-radius:10px; padding:14px 16px; font-size:.85rem;}
 .dropzone{
-  border:2px dashed #cfd8dc; border-radius:12px; padding:20px; text-align:center; cursor:pointer; transition:.15s;
+  border:2px dashed #cfd8dc; border-radius:12px; padding:20px; text-align:center; transition:.15s;
   background:#fafcfd;
 }
 .dropzone:hover{border-color:var(--brand-500); background:var(--brand-100);}
@@ -672,12 +672,16 @@ table.tbl tbody tr:hover{background:#fafcfd;}
 
             <div class="mb-3">
               <label class="form-label small fw-semibold">Foto Bukti Meteran <span class="text-danger">(wajib)</span></label>
-              <div class="dropzone" onclick="document.getElementById('fileFoto').click()">
-                <i class="bi bi-camera fs-3 text-secondary"></i>
-                <div class="small text-muted mt-1">Klik untuk pilih foto wajib (JPG/PNG/WEBP, maks 5MB)</div>
+              <div class="dropzone">
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-brand btn-sm flex-fill" id="btnKamera"><i class="bi bi-camera-fill"></i> Ambil Foto</button>
+                  <button type="button" class="btn btn-outline-brand btn-sm flex-fill" id="btnGaleri"><i class="bi bi-images"></i> Galeri</button>
+                </div>
                 <img id="previewFoto" style="display:none;">
+                <div id="infoFoto" class="small text-muted mt-1">"Ambil Foto" langsung membuka kamera (di HP). Foto otomatis dikecilkan sebelum dikirim.</div>
+                <input type="file" id="inpKamera" name="foto_file" accept="image/*" capture="environment" style="display:none;">
+                <input type="file" id="inpGaleri" name="foto_file" accept="image/*" style="display:none;">
               </div>
-              <input type="file" id="fileFoto" name="foto_file" accept="image/jpeg,image/png,image/webp" style="display:none;">
             </div>
 
             <div class="mb-3">
@@ -710,6 +714,7 @@ table.tbl tbody tr:hover{background:#fafcfd;}
       </div>
     </div>
 
+    <script src="{{ url_for('static', filename='js/foto.js') }}"></script>
     <script>
       const DATA_PELANGGAN = {{ pelanggan_json|safe }};
       const PREFILL_ID = "{{ prefill }}";
@@ -797,14 +802,11 @@ table.tbl tbody tr:hover{background:#fafcfd;}
         }
       });
 
-      // preview foto
-      document.getElementById('fileFoto').addEventListener('change', function () {
-        const file = this.files[0];
-        const prev = document.getElementById('previewFoto');
-        if (file) {
-          prev.src = URL.createObjectURL(file);
-          prev.style.display = 'block';
-        }
+      // foto: kamera langsung / galeri + resize otomatis (foto.js)
+      FotoTools.pasangFoto({
+        btnKamera: 'btnKamera', btnGaleri: 'btnGaleri',
+        inpKamera: 'inpKamera', inpGaleri: 'inpGaleri',
+        preview: 'previewFoto', info: 'infoFoto'
       });
 
       // prefill pelanggan: dari pintasan "Catat" di tabel pelanggan, atau redirect balik saat anomali

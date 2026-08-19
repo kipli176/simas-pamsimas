@@ -41,7 +41,7 @@ table.tbl tbody td{padding:9px 12px; vertical-align:middle; border-bottom:1px so
 .wizard-row .form-label{min-height:26px; display:flex; align-items:center;}
 .section-desc{color:var(--muted); font-size:.82rem; margin-bottom:16px;}
 .info-pelanggan{background:var(--brand-100); border:1px solid #cfe9f5; border-radius:10px; padding:12px 14px; font-size:.83rem;}
-.dropzone{border:2px dashed #cfd8dc; border-radius:12px; padding:16px; text-align:center; cursor:pointer; background:#fafcfd;}
+.dropzone{border:2px dashed #cfd8dc; border-radius:12px; padding:16px; text-align:center; background:#fafcfd;}
 .dropzone img{max-height:110px; border-radius:8px; margin-top:8px;}
 .pager{display:flex; gap:6px; padding:12px 14px;}
 .pager a, .pager span{padding:5px 11px; border-radius:8px; font-size:.78rem; font-weight:600; text-decoration:none; color:var(--brand-700); border:1px solid var(--line);}
@@ -157,12 +157,16 @@ table.tbl tbody td{padding:9px 12px; vertical-align:middle; border-bottom:1px so
 
         <div class="mb-3">
           <label class="form-label small fw-semibold">Foto Bukti Meteran <span class="text-danger">(wajib)</span></label>
-          <div class="dropzone" onclick="document.getElementById('fileFoto').click()">
-            <i class="bi bi-camera text-secondary"></i>
-            <div class="small text-muted">Klik untuk pilih foto wajib (JPG/PNG/WEBP, maks 5MB)</div>
+          <div class="dropzone">
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-brand btn-sm flex-fill" id="btnKamera"><i class="bi bi-camera-fill"></i> Ambil Foto</button>
+              <button type="button" class="btn btn-outline-brand btn-sm flex-fill" id="btnGaleri"><i class="bi bi-images"></i> Galeri</button>
+            </div>
             <img id="previewFoto" style="display:none;">
+            <div id="infoFoto" class="small text-muted mt-1">"Ambil Foto" langsung membuka kamera (di HP). Foto otomatis dikecilkan sebelum dikirim.</div>
+            <input type="file" id="inpKamera" name="foto_file" accept="image/*" capture="environment" style="display:none;">
+            <input type="file" id="inpGaleri" name="foto_file" accept="image/*" style="display:none;">
           </div>
-          <input type="file" id="fileFoto" accept="image/jpeg,image/png,image/webp" style="display:none;">
         </div>
 
         <div class="mb-3">
@@ -278,6 +282,7 @@ table.tbl tbody td{padding:9px 12px; vertical-align:middle; border-bottom:1px so
 
 <script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+<script src="{{ url_for('static', filename='js/foto.js') }}"></script>
 <script>
 const NAMA_PETUGAS = {{ nama_petugas|tojson }};
 const DATA_BINAAN = {{ pelanggan_json|safe }};
@@ -369,9 +374,13 @@ cariCepat.addEventListener('input', () => {
   if (found) pilihPelanggan(found.id);
 });
 
-document.getElementById('fileFoto').addEventListener('change', function(){
-  const f = this.files[0], prev = document.getElementById('previewFoto');
-  if (f) { prev.src = URL.createObjectURL(f); prev.style.display='block'; }
+// foto: kamera langsung / galeri + resize otomatis (foto.js)
+let fotoSekarang = null;
+FotoTools.pasangFoto({
+  btnKamera: 'btnKamera', btnGaleri: 'btnGaleri',
+  inpKamera: 'inpKamera', inpGaleri: 'inpGaleri',
+  preview: 'previewFoto', info: 'infoFoto',
+  onUbah: (f) => { fotoSekarang = f; }
 });
 
 function ambilDataForm(){
@@ -389,7 +398,7 @@ function kirimLangsung(){
   if (!d.pelanggan_id) { alert('Pilih pelanggan terlebih dahulu (RW → RT → Nama).'); return; }
   if (!d.meteran_akhir) { alert('Isi meteran akhir.'); return; }
 
-  const foto = document.getElementById('fileFoto').files[0];
+  const foto = fotoSekarang;
   if (!foto) { alert('Foto bukti meteran wajib diunggah.'); return; }
   if (foto.size > 5*1024*1024) { alert('Ukuran foto maksimal 5MB.'); return; }
   const fd = new FormData();
@@ -480,7 +489,7 @@ async function arsipkanOffline(){
   const d = ambilDataForm();
   if (!d.pelanggan_id) { alert('Pilih pelanggan terlebih dahulu.'); return; }
   if (!d.meteran_akhir) { alert('Isi meteran akhir.'); return; }
-  const foto = document.getElementById('fileFoto').files[0];
+  const foto = fotoSekarang;
   if (!foto) { alert('Foto bukti meteran wajib diunggah, termasuk untuk arsip offline.'); return; }
   if (foto.size > 5*1024*1024) { alert('Ukuran foto maksimal 5MB.'); return; }
   d.temp_id = 'tmp_' + Date.now();
@@ -495,8 +504,11 @@ async function arsipkanOffline(){
   document.getElementById('inputAlasan').value = '';
   document.getElementById('ckKonfirmasi').checked = false;
   boxKonfirmasi.style.display = 'none';
-  document.getElementById('fileFoto').value = '';
+  fotoSekarang = null;
+  document.getElementById('inpKamera').value = '';
+  document.getElementById('inpGaleri').value = '';
   document.getElementById('previewFoto').style.display = 'none';
+  document.getElementById('infoFoto').textContent = '"Ambil Foto" langsung membuka kamera (di HP). Foto otomatis dikecilkan sebelum dikirim.';
   renderArsip();
 }
 
