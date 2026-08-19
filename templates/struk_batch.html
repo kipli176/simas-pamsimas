@@ -3,17 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Struk — {{ p.nomor_meteran }}</title>
+<title>Cetak Nota Batch — {{ struk_list|length }} nota</title>
 <style>
   * { box-sizing: border-box; }
   body {
     font-family: 'Courier New', Consolas, monospace;
-    width: 80mm;
     margin: 0 auto;
     padding: 8px;
     font-size: 12px;
     color: #000;
-    background: #fff;
+    background: #f2f6f8;
   }
   .center { text-align: center; }
   .bold { font-weight: 700; }
@@ -24,7 +23,15 @@
   table { width: 100%; border-collapse: collapse; font-size: 11px; }
   td { padding: 1px 0; }
   .total-row { font-size: 14px; font-weight: 800; }
-  .no-print { margin-top: 14px; }
+
+  /* satu nota = satu halaman cetak (80mm) */
+  .struk-page {
+    width: 80mm; margin: 0 auto 12px; background: #fff; padding: 8px;
+    page-break-after: always; break-after: page;
+  }
+  .struk-page:last-child { page-break-after: auto; break-after: auto; }
+
+  .no-print { max-width: 80mm; margin: 0 auto 14px; font-family: system-ui, sans-serif; }
   .no-print button {
     width: 100%; padding: 10px; font-size: 14px; font-weight: 700;
     background: #0e7fae; color: #fff; border: none; border-radius: 8px; margin-bottom: 6px;
@@ -33,35 +40,46 @@
   @keyframes kedip { 50% { outline-color: #ffd54f; } }
   .no-print a { display:block; text-align:center; font-size:12px; color:#555; text-decoration:none; }
   .notif-blokir {
-    display: none; margin-top: 10px; padding: 10px; border: 1px solid #ffb74d;
-    background: #fff3e0; border-radius: 8px; font-family: system-ui, sans-serif;
-    font-size: 12px; color: #7a4a00; text-align: center;
+    display: none; margin: 0 auto 10px; max-width: 80mm; padding: 10px;
+    border: 1px solid #ffb74d; background: #fff3e0; border-radius: 8px;
+    font-family: system-ui, sans-serif; font-size: 12px; color: #7a4a00; text-align: center;
   }
   @media print {
+    body { background: #fff; padding: 0; }
     .no-print, .notif-blokir { display: none !important; }
-    body { width: 80mm; padding: 0; }
+    .struk-page { width: 80mm; margin: 0; padding: 0; }
   }
 </style>
 </head>
 <body>
 
-  {% include '_struk_body.html' %}
-
   <div class="notif-blokir" id="notifCetakBlokir">
     Dialog cetak tidak terbuka otomatis (browser memblokirnya).
-    <strong>Klik tombol "Cetak Struk" di bawah ini.</strong>
+    <strong>Klik tombol "Cetak Semua Nota" di bawah ini.</strong>
   </div>
 
   <div class="no-print">
-    <button id="btnCetakManual" onclick="window.print()">🖨️ Cetak Struk (80mm)</button>
+    <button id="btnCetakManual" onclick="window.print()">🖨️ Cetak Semua Nota ({{ struk_list|length }})</button>
     <a href="javascript:window.close()">Tutup halaman ini</a>
   </div>
+
+  {% for s in struk_list %}
+  <div class="struk-page">
+    {% with p=s.p, catat=s.catat, tagihan=s.tagihan, rincian=s.rincian,
+            tunggakan_lain=s.tunggakan_lain, periode_label_str=s.periode_label_str,
+            nama_instansi=nama_instansi, alamat_instansi=alamat_instansi,
+            telepon_instansi=telepon_instansi, dicetak_oleh=dicetak_oleh,
+            waktu_cetak=waktu_cetak %}
+      {% include '_struk_body.html' %}
+    {% endwith %}
+  </div>
+  {% endfor %}
 
   <script src="{{ url_for('static', filename='js/cetak_auto.js') }}"></script>
   <script>
     // otomatis buka dialog cetak begitu halaman siap; bila diblokir,
     // cetak_auto.js memunculkan notifikasi + tombol manual sebagai fallback
-    window.addEventListener('load', () => cetakOtomatis());
+    window.addEventListener('load', () => cetakOtomatis({ timeoutMs: 8000 }));
   </script>
 </body>
 </html>

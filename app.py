@@ -1648,6 +1648,71 @@ def struk_admin(tagihan_id):
     )
 
 
+@app.route("/tagihan/struk-batch")
+@perlu_auth_admin
+def struk_batch():
+    db = get_db()
+    # kumpulkan id dari query string: ?ids=1,2,3 (unik, maks 100)
+    ids = []
+    for s in request.args.get("ids", "").split(","):
+        s = s.strip()
+        if s.isdigit():
+            i = int(s)
+            if i not in ids:
+                ids.append(i)
+    ids = ids[:100]
+    if not ids:
+        flash("Tidak ada tagihan yang dipilih untuk dicetak.", "warning")
+        return redirect(url_for("index", tab="tagihan"))
+
+    q = ",".join("?" * len(ids))
+    rows = db.execute(
+        f"""SELECT t.*, p.nama, p.nomor_meteran, p.alamat, p.rt, p.rw, p.golongan_tarif
+            FROM tagihan t JOIN pelanggan p ON p.id = t.pelanggan_id
+            WHERE t.id IN ({q})""",
+        ids,
+    ).fetchall()
+    by_id = {r["id"]: r for r in rows}
+    # jaga urutan sesuai urutan yang dipilih pengguna
+    daftar = [by_id[i] for i in ids if i in by_id]
+    if not daftar:
+        flash("Tagihan yang dipilih tidak ditemukan.", "danger")
+        return redirect(url_for("index", tab="tagihan"))
+
+    nama_instansi = get_pengaturan(db, "nama_instansi")
+    alamat_instansi = get_pengaturan(db, "alamat_instansi")
+    telepon_instansi = get_pengaturan(db, "telepon_instansi")
+    waktu_cetak = datetime.now().strftime("%d-%m-%Y %H:%M")
+
+    struk_list = []
+    for t in daftar:
+        catat = db.execute(
+            "SELECT * FROM pencatatan WHERE pelanggan_id=? AND periode=?",
+            (t["pelanggan_id"], t["periode"]),
+        ).fetchone()
+        tunggakan_lain = db.execute(
+            "SELECT COALESCE(SUM(total_tagihan),0) s FROM tagihan "
+            "WHERE pelanggan_id=? AND status_bayar != 'lunas' AND periode != ?",
+            (t["pelanggan_id"], t["periode"]),
+        ).fetchone()["s"]
+        struk_list.append({
+            "p": t,
+            "catat": catat,
+            "tagihan": t,
+            "rincian": json.loads(t["rincian_tarif"]) if t["rincian_tarif"] else [],
+            "tunggakan_lain": tunggakan_lain,
+            "periode_label_str": periode_label(t["periode"]),
+        })
+
+    return render_template(
+        "struk_batch.html", struk_list=struk_list,
+        nama_instansi=nama_instansi, alamat_instansi=alamat_instansi,
+        telepon_instansi=telepon_instansi,
+        dicetak_oleh="Admin",
+        waktu_cetak=waktu_cetak,
+    )
+
+
 @app.route("/tagihan/export")
 @perlu_auth_admin
 def export_tagihan():

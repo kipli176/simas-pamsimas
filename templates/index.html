@@ -340,15 +340,20 @@ table.tbl tbody tr:hover{background:#fafcfd;}
     <form method="post" action="{{ url_for('batch_lunas') }}" onsubmit="return confirm('Tandai lunas semua tagihan yang dicentang?')">
     <div class="table-wrap">
       <div class="table-toolbar">
-        <div class="count">Menampilkan {{ tagihan_list|length }} dari {{ t_total }} tagihan · centang baris lalu klik "Tandai Lunas Terpilih"</div>
-        <button class="btn btn-sm btn-brand"><i class="bi bi-check2-all"></i> Tandai Lunas Terpilih</button>
+        <div class="count">Menampilkan {{ tagihan_list|length }} dari {{ t_total }} tagihan · centang baris lalu klik "Tandai Lunas Terpilih" atau "Cetak Nota Terpilih"</div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-brand"><i class="bi bi-check2-all"></i> Tandai Lunas Terpilih</button>
+          <button type="button" class="btn btn-sm btn-outline-brand" onclick="cetakNotaTerpilih()"><i class="bi bi-printer"></i> Cetak Nota Terpilih</button>
+        </div>
       </div>
       <div class="table-responsive">
         <table class="tbl table">
           <thead><tr>
             <th style="width:36px; text-align:center;"><input type="checkbox" id="cekSemua" class="form-check-input" title="Pilih semua yang belum lunas" onclick="document.querySelectorAll('input[name=pilih_id]').forEach(c => c.checked = this.checked)"></th>
             <th>No. Meteran</th><th>Nama</th><th>RT/RW</th><th>Golongan</th>
-            <th>Pemakaian</th><th>Jenis</th><th>Total</th><th>Status</th><th></th>
+            <th>Pemakaian</th><th>Jenis</th><th>Total</th><th>Status</th>
+            <th style="width:36px; text-align:center;"><input type="checkbox" id="cekSemuaCetak" class="form-check-input" title="Pilih semua untuk cetak nota" onclick="document.querySelectorAll('input[name=cetak_id]').forEach(c => c.checked = this.checked)"></th>
+            <th></th>
           </tr></thead>
           <tbody>
             {% for t in tagihan_list %}
@@ -367,6 +372,7 @@ table.tbl tbody tr:hover{background:#fafcfd;}
                 {% if t.waktu_bayar %}<div class="small text-muted mt-1">{{ t.waktu_bayar }}{% if t.dicatat_oleh %} · {{ t.dicatat_oleh }}{% endif %}</div>{% endif %}
                 {% else %}<span class="badge-x b-belum">Belum Bayar</span>{% endif %}
               </td>
+              <td class="text-center"><input type="checkbox" name="cetak_id" value="{{ t.id }}" class="form-check-input" title="Pilih untuk cetak nota"></td>
               <td class="text-nowrap">
                 {% if t.status_bayar != 'lunas' %}
                 <button type="submit" form="flunas{{ t.id }}" class="btn btn-sm btn-outline-brand"><i class="bi bi-check2"></i> Lunas</button>
@@ -378,7 +384,7 @@ table.tbl tbody tr:hover{background:#fafcfd;}
               </td>
             </tr>
             <tr class="rincian-row" style="display:none;">
-              <td colspan="10" style="background:#f7fafb;">
+              <td colspan="11" style="background:#f7fafb;">
                 <table class="table table-sm mb-0 small" style="font-size:.78rem;">
                   <thead><tr><th>Blok</th><th>m³</th><th>Harga / m³</th><th>Subtotal</th></tr></thead>
                   <tbody>
@@ -392,7 +398,7 @@ table.tbl tbody tr:hover{background:#fafcfd;}
               </td>
             </tr>
             {% else %}
-            <tr><td colspan="10" class="text-center text-muted py-5">Tidak ada tagihan yang cocok dengan filter. Coba reset filter atau klik "Generate Tagihan Bulan Ini".</td></tr>
+            <tr><td colspan="11" class="text-center text-muted py-5">Tidak ada tagihan yang cocok dengan filter. Coba reset filter atau klik "Generate Tagihan Bulan Ini".</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -1337,6 +1343,14 @@ table.tbl tbody tr:hover{background:#fafcfd;}
 
 <script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
-<script>document.getElementById('tahunFooter').textContent = new Date().getFullYear();</script>
+<script>
+document.getElementById('tahunFooter').textContent = new Date().getFullYear();
+
+function cetakNotaTerpilih(){
+  const ids = [...document.querySelectorAll('input[name=cetak_id]:checked')].map(c => c.value);
+  if (!ids.length) { alert('Centang dulu tagihan yang ingin dicetak.'); return; }
+  window.open('/tagihan/struk-batch?ids=' + ids.join(','), '_blank');
+}
+</script>
 </body>
 </html>

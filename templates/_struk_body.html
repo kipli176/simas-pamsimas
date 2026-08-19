@@ -1,0 +1,73 @@
+<div class="center">
+  <div class="title">{{ nama_instansi or 'PAMSIMAS' }}</div>
+  {% if alamat_instansi %}<div class="small">{{ alamat_instansi }}</div>{% endif %}
+  {% if telepon_instansi %}<div class="small">Telp/WA: {{ telepon_instansi }}</div>{% endif %}
+  <div class="small">Struk Tagihan Air Bersih</div>
+  <div class="small">Periode: {{ periode_label_str }}</div>
+</div>
+<div class="line"></div>
+
+<table>
+  <tr><td>No. Meteran</td><td class="bold" style="text-align:right;">{{ p.nomor_meteran }}</td></tr>
+  <tr><td>Nama</td><td style="text-align:right;">{{ p.nama }}</td></tr>
+  <tr><td>Alamat</td><td style="text-align:right;">RT {{ p.rt }}/RW {{ p.rw }}</td></tr>
+  <tr><td>Golongan</td><td style="text-align:right;">{{ p.golongan_tarif }}</td></tr>
+</table>
+<div class="line"></div>
+
+<table>
+  {% if catat %}
+  <tr><td>Meteran Awal</td><td style="text-align:right;">{{ catat.meteran_awal }}</td></tr>
+  <tr><td>Meteran Akhir</td><td style="text-align:right;">{{ catat.meteran_akhir }}</td></tr>
+  {% else %}
+  <tr><td colspan="2" class="small">Abodemen — bulan ini tidak ada pencatatan meteran</td></tr>
+  {% endif %}
+  <tr><td class="bold">Pemakaian</td><td class="bold" style="text-align:right;">{{ tagihan.pemakaian_m3 }} m³</td></tr>
+</table>
+<div class="line"></div>
+
+<div class="small bold">Rincian Tarif Progresif</div>
+<table>
+  {% for r in rincian %}
+  <tr>
+    <td>Blok {{ r.blok }} ({{ r.m3 }} m³)</td>
+    <td style="text-align:right;">Rp {{ "{:,.0f}".format(r.subtotal).replace(",",".") }}</td>
+  </tr>
+  {% endfor %}
+</table>
+<div class="line"></div>
+
+<table>
+  <tr class="total-row"><td>TOTAL</td><td style="text-align:right;">Rp {{ "{:,.0f}".format(tagihan.total_tagihan).replace(",",".") }}</td></tr>
+</table>
+<div class="row small" style="margin-top:4px;">
+  <span>Status</span>
+  <span class="bold">{{ "LUNAS" if tagihan.status_bayar == "lunas" else "BELUM BAYAR" }}</span>
+</div>
+
+{% if tunggakan_lain and tunggakan_lain > 0 %}
+<div class="line"></div>
+<table>
+  <tr>
+    <td>Tunggakan Bulan Sebelumnya</td>
+    <td style="text-align:right;">Rp {{ "{:,.0f}".format(tunggakan_lain).replace(",",".") }}</td>
+  </tr>
+  <tr class="total-row">
+    <td>TOTAL + TUNGGAKAN</td>
+    <td style="text-align:right;">Rp {{ "{:,.0f}".format(tunggakan_lain + (tagihan.total_tagihan if tagihan.status_bayar != "lunas" else 0)).replace(",",".") }}</td>
+  </tr>
+</table>
+{% endif %}
+
+{% if catat and catat.alasan %}
+<div class="line"></div>
+<div class="small">Catatan: {{ catat.alasan }}</div>
+{% endif %}
+
+<div class="line"></div>
+<div class="small center">
+  Dicatat oleh: {{ catat.petugas if catat else "-" }}<br>
+  Dicetak oleh: {{ dicetak_oleh }}<br>
+  {{ waktu_cetak }}
+</div>
+<div class="center small" style="margin-top:6px;">Terima kasih atas pembayarannya</div>
