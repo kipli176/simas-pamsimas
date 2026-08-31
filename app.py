@@ -1167,6 +1167,48 @@ def hapus_pelanggan(pelanggan_id):
     return redirect(url_for("index", tab="pelanggan"))
 
 
+@app.route("/pelanggan/maping-tarif", methods=["POST"])
+@perlu_auth_admin
+def maping_tarif_pelanggan():
+    """Ganti golongan tarif sejumlah pelanggan terpilih (ceklis di tab pelanggan) secara batch."""
+    db = get_db()
+    golongan_baru = (request.form.get("golongan_baru") or "").strip()
+    if golongan_baru not in daftar_golongan(db):
+        flash("Pilih golongan tarif tujuan yang terdaftar di tabel tarif.", "warning")
+        return redirect(url_for("index", tab="pelanggan"))
+    ids = [int(i) for i in request.form.getlist("pilih_pelanggan") if i.isdigit()]
+    if not ids:
+        flash("Centang minimal satu pelanggan terlebih dahulu.", "warning")
+        return redirect(_kembali_aman("pelanggan"))
+
+    tempat = ",".join("?" * len(ids))
+    rows = db.execute(
+        f"SELECT id, nama, nomor_meteran, golongan_tarif FROM pelanggan WHERE id IN ({tempat})",
+        ids,
+    ).fetchall()
+    n_diubah = 0
+    for p in rows:
+        if p["golongan_tarif"] == golongan_baru:
+            continue
+        db.execute("UPDATE pelanggan SET golongan_tarif=? WHERE id=?", (golongan_baru, p["id"]))
+        db.execute(
+            """INSERT INTO audit_log
+               (petugas, pelanggan_id, nomor_meteran, periode, meteran_awal, meteran_akhir,
+                pemakaian_m3, anomali, sumber, keterangan)
+               VALUES ('admin', ?, ?, NULL, NULL, NULL, NULL, 0, 'tarif', ?)""",
+            (p["id"], p["nomor_meteran"],
+             f"Golongan tarif diubah {p['golongan_tarif']} → {golongan_baru} (maping batch)"),
+        )
+        n_diubah += 1
+    db.commit()
+
+    if n_diubah:
+        flash(f"{n_diubah} pelanggan dipindahkan ke golongan tarif {golongan_baru}.", "success")
+    else:
+        flash(f"Tidak ada perubahan — pelanggan terpilih sudah memakai golongan {golongan_baru}.", "info")
+    return redirect(_kembali_aman("pelanggan"))
+
+
 @app.route("/pelanggan/<int:pelanggan_id>")
 @perlu_auth_admin
 def detail_pelanggan(pelanggan_id):
