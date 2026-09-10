@@ -141,7 +141,13 @@ def rupiah(v):
     return "Rp " + "{:,.0f}".format(v or 0).replace(",", ".")
 
 
+def format_rt_rw(v):
+    nilai = (str(v).strip() if v is not None else "")
+    return nilai.zfill(2) if nilai.isdigit() else nilai
+
+
 app.jinja_env.filters["rupiah"] = rupiah
+app.jinja_env.filters["format_rt_rw"] = format_rt_rw
 app.jinja_env.globals["periode_label"] = periode_label
 
 
@@ -1060,8 +1066,8 @@ def tambah_pelanggan():
                 request.form["nomor_meteran"].strip(),
                 request.form["nama"].strip(),
                 request.form.get("alamat", "").strip(),
-                request.form.get("rt", "").strip(),
-                request.form.get("rw", "").strip(),
+                format_rt_rw(request.form.get("rt", "")),
+                format_rt_rw(request.form.get("rw", "")),
                 request.form["golongan_tarif"],
                 int(request.form.get("meteran_awal") or 0),
                 request.form.get("petugas", "").strip(),
@@ -1102,8 +1108,8 @@ def ubah_pelanggan(pelanggan_id):
                 request.form["nomor_meteran"].strip(),
                 request.form["nama"].strip(),
                 request.form.get("alamat", "").strip(),
-                request.form.get("rt", "").strip(),
-                request.form.get("rw", "").strip(),
+                format_rt_rw(request.form.get("rt", "")),
+                format_rt_rw(request.form.get("rw", "")),
                 request.form["golongan_tarif"],
                 int(request.form.get("meteran_awal") or 0),
                 request.form.get("petugas", "").strip(),
@@ -1328,8 +1334,8 @@ def import_pelanggan():
                 """INSERT INTO pelanggan
                    (nomor_meteran, nama, alamat, rt, rw, golongan_tarif, meteran_awal, petugas, kontak)
                    VALUES (?,?,?,?,?,?,?,?,?)""",
-                (nomor, nama, (row.get("alamat") or "").strip(), (row.get("rt") or "").strip(),
-                 (row.get("rw") or "").strip(), golongan, meteran_awal,
+                (nomor, nama, (row.get("alamat") or "").strip(), format_rt_rw(row.get("rt")),
+                 format_rt_rw(row.get("rw")), golongan, meteran_awal,
                  (row.get("petugas") or "").strip(), (row.get("kontak") or "").strip()),
             )
             sukses += 1

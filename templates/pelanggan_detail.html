@@ -74,7 +74,7 @@ table.tbl tbody td{padding:9px 12px; vertical-align:middle; border-bottom:1px so
           <div class="rowx"><span>No. Meteran</span><strong>{{ p.nomor_meteran }}</strong></div>
           <div class="rowx"><span>Nama</span><strong>{{ p.nama }}</strong></div>
           <div class="rowx"><span>Alamat</span><strong>{{ p.alamat or '-' }}</strong></div>
-          <div class="rowx"><span>RT / RW</span><strong>{{ p.rt or '-' }} / {{ p.rw or '-' }}</strong></div>
+          <div class="rowx"><span>RT / RW</span><strong>{{ p.rt|format_rt_rw or '-' }} / {{ p.rw|format_rt_rw or '-' }}</strong></div>
           <div class="rowx"><span>Golongan Tarif</span><strong>{{ p.golongan_tarif }}</strong></div>
           <div class="rowx"><span>Meteran Awal</span><strong>{{ p.meteran_awal }}</strong></div>
           <div class="rowx"><span>Petugas Binaan</span><strong>{{ p.petugas or '-' }}</strong></div>
@@ -106,21 +106,22 @@ table.tbl tbody td{padding:9px 12px; vertical-align:middle; border-bottom:1px so
           <div class="col-md-6"><label class="form-label small fw-semibold">Nomor Meteran</label><input type="text" name="nomor_meteran" class="form-control form-control-sm" value="{{ p.nomor_meteran }}" required></div>
           <div class="col-md-6"><label class="form-label small fw-semibold">Nama</label><input type="text" name="nama" class="form-control form-control-sm" value="{{ p.nama }}" required></div>
           <div class="col-12"><label class="form-label small fw-semibold">Alamat</label><input type="text" name="alamat" class="form-control form-control-sm" value="{{ p.alamat or '' }}"></div>
-          {% set nomor_list = range(1, 21)|map('string')|list %}
+          {% set nomor_list = [] %}
+          {% for n in range(1, 21) %}{% set _ = nomor_list.append('%02d'|format(n)) %}{% endfor %}
           <div class="col-6 col-md-3">
             <label class="form-label small fw-semibold">RT</label>
             <select name="rt" class="form-select form-select-sm">
               <option value="">— pilih —</option>
-              {% for i in nomor_list %}<option value="{{ i }}" {{ 'selected' if p.rt==i }}>RT {{ i }}</option>{% endfor %}
-              {% if p.rt and p.rt not in nomor_list %}<option value="{{ p.rt }}" selected>RT {{ p.rt }}</option>{% endif %}
+              {% for i in nomor_list %}<option value="{{ i }}" {{ 'selected' if (p.rt|format_rt_rw)==i }}>RT {{ i }}</option>{% endfor %}
+              {% if p.rt and (p.rt|format_rt_rw) not in nomor_list %}<option value="{{ p.rt|format_rt_rw }}" selected>RT {{ p.rt|format_rt_rw }}</option>{% endif %}
             </select>
           </div>
           <div class="col-6 col-md-3">
             <label class="form-label small fw-semibold">RW</label>
             <select name="rw" class="form-select form-select-sm">
               <option value="">— pilih —</option>
-              {% for i in nomor_list %}<option value="{{ i }}" {{ 'selected' if p.rw==i }}>RW {{ i }}</option>{% endfor %}
-              {% if p.rw and p.rw not in nomor_list %}<option value="{{ p.rw }}" selected>RW {{ p.rw }}</option>{% endif %}
+              {% for i in nomor_list %}<option value="{{ i }}" {{ 'selected' if (p.rw|format_rt_rw)==i }}>RW {{ i }}</option>{% endfor %}
+              {% if p.rw and (p.rw|format_rt_rw) not in nomor_list %}<option value="{{ p.rw|format_rt_rw }}" selected>RW {{ p.rw|format_rt_rw }}</option>{% endif %}
             </select>
           </div>
           <div class="col-6 col-md-3">
