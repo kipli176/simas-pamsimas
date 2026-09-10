@@ -696,6 +696,7 @@ def filter_pelanggan(args, periode):
 def filter_tagihan(args, periode):
     """Bangun WHERE + params untuk tab Tagihan dari query-string.
     Dipakai bersama oleh halaman index dan export CSV tagihan."""
+    t_periode = args.get("t_periode", periode)
     t_rw = args.get("t_rw", "")
     t_rt = args.get("t_rt", "")
     t_golongan = args.get("t_golongan", "")
@@ -704,7 +705,7 @@ def filter_tagihan(args, periode):
     t_status = args.get("t_status", "")
     t_q = args.get("t_q", "").strip()
 
-    where, params = ["t.periode = ?"], [periode]
+    where, params = ["t.periode = ?"], [t_periode]
     if t_rw:
         where.append("p.rw = ?"); params.append(t_rw)
     if t_rt:
@@ -722,6 +723,7 @@ def filter_tagihan(args, periode):
         like = f"%{t_q}%"; params += [like, like]
 
     return {
+        "t_periode": t_periode,
         "t_rw": t_rw, "t_rt": t_rt, "t_golongan": t_golongan,
         "t_petugas": t_petugas,
         "t_jenis": t_jenis, "t_status": t_status, "t_q": t_q,
@@ -812,7 +814,7 @@ def index():
 
     # ---------- FILTER TAB TAGIHAN BULAN INI ----------
     tf = filter_tagihan(request.args, periode)
-    t_rw, t_rt = tf["t_rw"], tf["t_rt"]
+    t_periode, t_rw, t_rt = tf["t_periode"], tf["t_rw"], tf["t_rt"]
     t_golongan, t_petugas = tf["t_golongan"], tf["t_petugas"]
     t_jenis, t_status, t_q = tf["t_jenis"], tf["t_status"], tf["t_q"]
     t_page = get_int_arg("t_page", 1)
@@ -1023,6 +1025,7 @@ def index():
         baru_id=baru_id,
         # tagihan
         tagihan_list=tagihan_list, t_total=t_total, t_page=t_page, t_total_pages=t_total_pages,
+        t_periode=t_periode, t_periode_label=periode_label(t_periode),
         t_rw=t_rw, t_rt=t_rt, t_golongan=t_golongan, t_petugas=t_petugas,
         t_jenis=t_jenis, t_status=t_status, t_q=t_q,
         t_rt_list=daftar_rt(db, t_rw) if t_rw else daftar_rt(db),
@@ -1767,6 +1770,7 @@ def export_tagihan():
     db = get_db()
     periode = periode_sekarang()
     tf = filter_tagihan(request.args, periode)
+    t_periode = tf["t_periode"]
     where_sql, params = tf["where_sql"], tf["params"]
     rows = db.execute(
         f"""SELECT t.*, p.nama, p.nomor_meteran, p.rt, p.rw, p.golongan_tarif,
@@ -1793,7 +1797,7 @@ def export_tagihan():
     return Response(
         buf.getvalue(),
         mimetype="text/csv",
-        headers={"Content-Disposition": f"attachment; filename=tagihan_{periode}.csv"},
+        headers={"Content-Disposition": f"attachment; filename=tagihan_{t_periode}.csv"},
     )
 
 

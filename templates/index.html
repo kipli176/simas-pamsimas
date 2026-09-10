@@ -277,11 +277,17 @@ table.tbl tbody tr:hover{background:#fafcfd;}
        TAB: TAGIHAN BULAN INI
     ====================================================================== #}
     {% if tab == 'tagihan' %}
-    <div class="section-title">Tagihan Bulan Ini</div>
-    <div class="section-desc">Daftar tagihan periode {{ periode_now_label }}. Gunakan filter untuk mempersempit pencarian.</div>
+    <div class="section-title">Tagihan</div>
+    <div class="section-desc">Daftar tagihan periode {{ t_periode_label }}. Gunakan filter untuk mempersempit pencarian.</div>
 
     <form method="get" class="filterbar row g-2 align-items-end">
       <input type="hidden" name="tab" value="tagihan">
+      <div class="col-6 col-md-2">
+        <label>Periode</label>
+        <select name="t_periode" class="form-select" onchange="this.form.submit()">
+          {% for pr in periode_list %}<option value="{{ pr }}" {{ 'selected' if t_periode==pr }}>{{ periode_label(pr) }}</option>{% endfor %}
+        </select>
+      </div>
       <div class="col-6 col-md-2">
         <label>RW</label>
         <select name="t_rw" class="form-select" onchange="this.form.submit()">
@@ -332,8 +338,8 @@ table.tbl tbody tr:hover{background:#fafcfd;}
       </div>
       <div class="col-12 d-flex gap-2 mt-2">
         <button class="btn btn-brand btn-sm px-3"><i class="bi bi-search"></i> Terapkan</button>
-        <a href="{{ page_url(tab='tagihan', t_rw='', t_rt='', t_golongan='', t_petugas='', t_jenis='', t_status='', t_q='', t_page=1) }}" class="btn btn-outline-secondary btn-sm px-3">Reset Filter</a>
-        <a href="{{ url_for('export_tagihan', t_rw=t_rw, t_rt=t_rt, t_golongan=t_golongan, t_petugas=t_petugas, t_jenis=t_jenis, t_status=t_status, t_q=t_q) }}" class="btn btn-outline-brand btn-sm px-3 ms-auto"><i class="bi bi-download"></i> Export CSV</a>
+        <a href="{{ page_url(tab='tagihan', t_periode=t_periode, t_rw='', t_rt='', t_golongan='', t_petugas='', t_jenis='', t_status='', t_q='', t_page=1) }}" class="btn btn-outline-secondary btn-sm px-3">Reset Filter</a>
+        <a href="{{ url_for('export_tagihan', t_periode=t_periode, t_rw=t_rw, t_rt=t_rt, t_golongan=t_golongan, t_petugas=t_petugas, t_jenis=t_jenis, t_status=t_status, t_q=t_q) }}" class="btn btn-outline-brand btn-sm px-3 ms-auto"><i class="bi bi-download"></i> Export CSV</a>
       </div>
     </form>
 
@@ -398,7 +404,7 @@ table.tbl tbody tr:hover{background:#fafcfd;}
               </td>
             </tr>
             {% else %}
-            <tr><td colspan="11" class="text-center text-muted py-5">Tidak ada tagihan yang cocok dengan filter. Coba reset filter atau klik "Generate Tagihan Bulan Ini".</td></tr>
+            <tr><td colspan="11" class="text-center text-muted py-5">Tidak ada tagihan yang cocok dengan filter. Coba reset filter atau pilih periode lain.</td></tr>
             {% endfor %}
           </tbody>
         </table>
