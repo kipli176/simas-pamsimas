@@ -1645,15 +1645,23 @@ def batch_lunas():
         flash("Pilih minimal satu tagihan terlebih dahulu.", "warning")
         return redirect(_kembali_aman("tagihan"))
     tempat = ",".join("?" * len(ids))
-    db.execute(
-        f"UPDATE tagihan SET status_bayar='lunas', waktu_bayar=?, dicatat_oleh='admin' WHERE id IN ({tempat})",
-        [datetime.now().strftime("%d-%m-%Y %H:%M")] + ids,
-    )
-    # audit per tagihan
     rows = db.execute(
-        f"SELECT t.*, p.nomor_meteran FROM tagihan t JOIN pelanggan p ON p.id=t.pelanggan_id WHERE t.id IN ({tempat})",
+        f"""SELECT t.*, p.nomor_meteran
+            FROM tagihan t JOIN pelanggan p ON p.id=t.pelanggan_id
+            WHERE t.id IN ({tempat}) AND t.status_bayar != 'lunas'""",
         ids,
     ).fetchall()
+    if not rows:
+        flash("Tagihan terpilih sudah lunas semua.", "info")
+        return redirect(_kembali_aman("tagihan"))
+
+    ids_belum_lunas = [t["id"] for t in rows]
+    tempat_belum_lunas = ",".join("?" * len(ids_belum_lunas))
+    db.execute(
+        f"UPDATE tagihan SET status_bayar='lunas', waktu_bayar=?, dicatat_oleh='admin' WHERE id IN ({tempat_belum_lunas})",
+        [datetime.now().strftime("%d-%m-%Y %H:%M")] + ids_belum_lunas,
+    )
+    # audit per tagihan
     for t in rows:
         db.execute(
             """INSERT INTO audit_log
@@ -1664,7 +1672,7 @@ def batch_lunas():
              f"Tagihan {periode_label(t['periode'])} ditandai lunas {rupiah(t['total_tagihan'])} (batch)"),
         )
     db.commit()
-    flash(f"{len(ids)} tagihan ditandai lunas sekaligus.", "success")
+    flash(f"{len(ids_belum_lunas)} tagihan ditandai lunas sekaligus.", "success")
     return redirect(_kembali_aman("tagihan"))
 
 
