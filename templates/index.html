@@ -490,6 +490,19 @@ table.tbl tbody tr:hover{background:#fafcfd;}
           </div>
         </form>
 
+        <div class="d-flex justify-content-end mb-2">
+          <form method="get" class="d-flex align-items-center gap-1 mb-0">
+            <input type="hidden" name="tab" value="pelanggan">
+            <label class="small text-muted text-nowrap mb-0" for="p_limit">Tampilkan per halaman</label>
+            <select name="p_limit" id="p_limit" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
+              {% for opt in page_size_options %}
+              <option value="{{ opt }}" {{ 'selected' if p_limit != 'semua' and p_limit_size == opt }}>{{ opt }}</option>
+              {% endfor %}
+              <option value="semua" {{ 'selected' if p_limit == 'semua' }}>Semua</option>
+            </select>
+          </form>
+        </div>
+
         <form method="post" action="{{ url_for('maping_tarif_pelanggan') }}" onsubmit="return konfirmasiMapingTarif(this)">
         <div class="table-wrap">
           <div class="table-toolbar">

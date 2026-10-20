@@ -43,6 +43,7 @@ ALLOWED_EXT = {"jpg", "jpeg", "png", "webp"}
 
 ABODEMEN = 25000          # Rp, tarif tetap bulanan (berlaku untuk semua pelanggan setiap bulan)
 PAGE_SIZE = 25             # jumlah baris per halaman tabel
+PAGE_SIZE_OPTIONS = [10, 25, 50, 100, 200, 500]  # pilihan limit baris per halaman (tabel Pelanggan)
 ANOMALI_KALI_ATAS = 3.0    # pemakaian > rata2 x ini -> dicurigai anomali (lonjakan)
 ANOMALI_KALI_BAWAH = 0.2   # pemakaian < rata2 x ini -> dicurigai anomali (anjlok/macet meteran)
 MIN_RIWAYAT_UTK_ANOMALI = 2  # minimal berapa bulan riwayat sebelum deteksi anomali berbasis rata-rata aktif
@@ -793,12 +794,26 @@ def index():
     p_total = db.execute(
         f"SELECT COUNT(*) c FROM pelanggan WHERE {pf['where_sql']}", pf["params"]
     ).fetchone()["c"]
-    p_total_pages = max(1, (p_total + PAGE_SIZE - 1) // PAGE_SIZE)
+
+    # limit baris per halaman (bisa dipilih pengguna); "semua" = tampilkan seluruhnya
+    p_limit = request.args.get("p_limit", "").strip().lower()
+    if p_limit == "semua":
+        p_limit_size = p_total
+    else:
+        try:
+            p_limit_size = int(p_limit)
+        except (TypeError, ValueError):
+            p_limit_size = PAGE_SIZE
+        if p_limit_size < 1 or p_limit_size > 1000:
+            p_limit_size = PAGE_SIZE
+    p_limit_size = max(1, min(p_limit_size, p_total))
+
+    p_total_pages = max(1, (p_total + p_limit_size - 1) // p_limit_size)
     p_page = min(p_page, p_total_pages)
     pelanggan_list = db.execute(
         f"SELECT * FROM pelanggan WHERE {pf['where_sql']} "
         f"ORDER BY {kolom_sort} {arah_sort}, rw, rt, nama LIMIT ? OFFSET ?",
-        pf["params"] + [PAGE_SIZE, (p_page - 1) * PAGE_SIZE],
+        pf["params"] + [p_limit_size, (p_page - 1) * p_limit_size],
     ).fetchall()
 
     # daftar nomor meteran terdaftar untuk cek duplikat langsung di form tambah
@@ -1015,6 +1030,7 @@ def index():
         ringkasan=ringkasan,
         # pelanggan
         pelanggan_list=pelanggan_list, p_total=p_total, p_page=p_page, p_total_pages=p_total_pages,
+        p_limit=p_limit, p_limit_size=p_limit_size, page_size_options=PAGE_SIZE_OPTIONS,
         p_rw=pf["p_rw"], p_rt=pf["p_rt"], p_golongan=pf["p_golongan"],
         p_petugas=pf["p_petugas"], p_status=pf["p_status"], p_aktif=pf["p_aktif"], p_q=pf["p_q"],
         p_sort=p_sort, p_arah=p_arah,

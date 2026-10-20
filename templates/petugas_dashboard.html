@@ -206,24 +206,24 @@ table.tbl tbody td{padding:9px 12px; vertical-align:middle; border-bottom:1px so
       <div class="section-title mt-2">Pelanggan Binaan Saya</div>
       <div class="text-muted small mb-1">Klik "Catat" untuk isi form di samping, atau "Struk" jika sudah tercatat bulan ini.</div>
 
-      <form method="get" class="filterbar row g-2 align-items-end">
+      <form method="get" class="filterbar row g-2 align-items-end" onsubmit="simpanScrollFilter()">
         <div class="col-4 col-md-3">
           <label>RW</label>
-          <select name="rw" class="form-select form-select-sm" onchange="this.form.submit()">
+          <select name="rw" class="form-select form-select-sm" onchange="simpanScrollFilter(); this.form.submit()">
             <option value="">Semua</option>
             {% for r in rw_list %}<option value="{{ r }}" {{ 'selected' if rw==r }}>RW {{ r }}</option>{% endfor %}
           </select>
         </div>
         <div class="col-4 col-md-3">
           <label>RT</label>
-          <select name="rt" class="form-select form-select-sm" onchange="this.form.submit()">
+          <select name="rt" class="form-select form-select-sm" onchange="simpanScrollFilter(); this.form.submit()">
             <option value="">Semua</option>
             {% for r in rt_list %}<option value="{{ r }}" {{ 'selected' if rt==r }}>RT {{ r }}</option>{% endfor %}
           </select>
         </div>
         <div class="col-4 col-md-3">
           <label>Status</label>
-          <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+          <select name="status" class="form-select form-select-sm" onchange="simpanScrollFilter(); this.form.submit()">
             <option value="">Semua</option>
             <option value="tercatat" {{ 'selected' if status=='tercatat' }}>Sudah</option>
             <option value="belum" {{ 'selected' if status=='belum' }}>Belum</option>
@@ -235,7 +235,7 @@ table.tbl tbody td{padding:9px 12px; vertical-align:middle; border-bottom:1px so
         </div>
         <div class="col-12 d-flex gap-2 mt-1">
           <button class="btn btn-sm btn-brand px-3">Terapkan</button>
-          <a href="{{ url_for('petugas_dashboard') }}" class="btn btn-sm btn-outline-secondary px-3">Reset</a>
+          <a href="{{ url_for('petugas_dashboard') }}" onclick="hapusFilterTersimpan()" class="btn btn-sm btn-outline-secondary px-3">Reset</a>
         </div>
       </form>
 
@@ -295,6 +295,63 @@ const infoBox = document.getElementById('infoPelanggan');
 const inputAkhir = document.getElementById('inputAkhir');
 const hintPakai = document.getElementById('hintPakai');
 const boxKonfirmasi = document.getElementById('boxKonfirmasi');
+
+/* ---------- Pertahankan filter tabel binaan saat kembali dari struk/print ---------- */
+const FILTER_KEY = 'pamsimas_filter_petugas';
+
+function bacaFilterDariUrl() {
+  const p = new URLSearchParams(location.search);
+  return { rw: p.get('rw') || '', rt: p.get('rt') || '', status: p.get('status') || '', q: p.get('q') || '' };
+}
+
+function filterAktif(f) {
+  return !!(f.rw || f.rt || f.status || f.q);
+}
+
+function hapusFilterTersimpan() {
+  sessionStorage.removeItem(FILTER_KEY);
+}
+
+function pulihkanFilterTersimpan() {
+  const aktif = bacaFilterDariUrl();
+  if (filterAktif(aktif)) {
+    // URL adalah sumber kebenaran -> simpan untuk dipulihkan nanti
+    sessionStorage.setItem(FILTER_KEY, JSON.stringify(aktif));
+    return;
+  }
+  let tersimpan = null;
+  try { tersimpan = JSON.parse(sessionStorage.getItem(FILTER_KEY) || 'null'); } catch (e) {}
+  if (!tersimpan || !filterAktif(tersimpan)) return;
+  const params = new URLSearchParams();
+  if (tersimpan.rw) params.set('rw', tersimpan.rw);
+  if (tersimpan.rt) params.set('rt', tersimpan.rt);
+  if (tersimpan.status) params.set('status', tersimpan.status);
+  if (tersimpan.q) params.set('q', tersimpan.q);
+  const qs = params.toString();
+  if (qs) location.replace(location.pathname + '?' + qs);
+}
+
+pulihkanFilterTersimpan();
+
+/* ---------- Jaga posisi scroll saat filter di-submit (mobile) ---------- */
+const SCROLL_KEY = 'pamsimas_scroll_petugas';
+
+function simpanScrollFilter() {
+  sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
+}
+
+function pulihkanScroll() {
+  const y = parseInt(sessionStorage.getItem(SCROLL_KEY) || '0', 10);
+  if (y > 0) {
+    window.scrollTo(0, y);
+    sessionStorage.removeItem(SCROLL_KEY);
+  }
+}
+
+// tunggu render selesai (font/gambar) agar posisi scroll akurat
+window.addEventListener('load', () => {
+  requestAnimationFrame(() => setTimeout(pulihkanScroll, 0));
+});
 
 // wizard RW -> RT -> Nama (sama seperti form pencatatan di halaman admin)
 [...new Set(DATA_BINAAN.map(p => p.rw))].sort().forEach(rw => {
